@@ -11,6 +11,7 @@
 #include <cstring> 
 #include <string> 
 #include <map> 
+#include <filesystem> 
 
 #include <opencv2/opencv.hpp> 
 
@@ -19,18 +20,22 @@ const int DATABASE_FP = 2;
 const int METRIC = 3; 
 const int N = 4; 
 
+using namespace std::tr2::sys; 
+
 std::vector<std::string> 
 traverse_dir(char *dir_fp) { 
     std::vector<std::string> images_fp; 
-    DIR *dirp; 
-    struct dirent *dp; 
-        
-    dirp = opendir(dir_fp);
 
-    if (dirp == NULL) {
-        printf("Cannot open directory %s\n", dir_fp);
-        exit(-1);
-    }
+    //for (recursive_directory_iterator i(dir_fp), end; 
+            //i != end; i++) { 
+        //if (is_directory(i->path())) {
+            //auto images_subdir = traverse_dir(i->path());
+            //images_fp.insert(images_fp.end(), images_subdir.start(), 
+
+        //}
+
+    //}
+
 
     while ((dp = readdir(dirp)) != NULL) {
         if (strstr(dp->d_name, ".jpg") ||
@@ -41,8 +46,6 @@ traverse_dir(char *dir_fp) {
             images_fp.push_back(dp->d_name);
         }
     }
-
-    closedir(dirp); 
 
     return images_fp;
 }
@@ -79,11 +82,17 @@ int main(int argc, char *argv[]) {
     // 3: which metrics to use 
     // 4: N -- number of results to show 
 
-    if (argc != 5) 
-        std::cerr << "expects four arguments" << std::endl;
+    //if (argc != 5) 
+        //std::cerr << "expects four arguments" << std::endl;
 
-    auto images = traverse_dir(argv[DATABASE_FP]);
+    //auto images = traverse_dir(argv[DATABASE_FP]);
 
+    auto fp = std::string(argv[1]);
+
+    for (recursive_directory_iterator i(fp), end; 
+            i != end; i++) {
+        std::cout << i->path() << std::endl; 
+    }
 
     return 0; 
 }

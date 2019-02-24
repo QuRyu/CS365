@@ -2,7 +2,7 @@ CC = clang++
 
 CXX = $(CC)
 
-CFLAGS = -I/usr/local/include/opencv4 -I../include -std=c++11
+CFLAGS = -I/usr/local/include/opencv4 -I../include -std=c++17 
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -L/usr/local/lib
 
