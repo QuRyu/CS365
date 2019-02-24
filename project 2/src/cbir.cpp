@@ -50,15 +50,26 @@ traverse_dir(char *dir_fp) {
 /**
  * Given the file path, return the image 
  */
-cv::Mat read_image(std::string fp) {
+cv::Mat read_image(const std::string &fp) {
     return cv::imread(fp);
 }
 
 std::map<std::string, double> 
-compare(cv::Mat query, const std::vector<std::string> &database, 
-        std::function<int(const cv::Mat,const cv::Mat)> func) { 
+compare(const std::string &query_fp,  
+        const std::vector<std::string> &database, 
+        std::function<double(const cv::Mat,const cv::Mat)> func) { 
+    std::map<std::string, double> result; 
+    auto query = read_image(query_fp);
 
+    for (auto img_fp : database) {
+        double distance; 
 
+        auto img = read_image(img_fp);
+        distance = func(query, img);
+        result[img_fp] = distance;
+    }
+
+    return result; 
 }
 
 int main(int argc, char *argv[]) { 
