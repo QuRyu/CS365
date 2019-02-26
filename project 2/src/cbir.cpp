@@ -65,11 +65,10 @@ cv::Mat read_image(const std::string &fp) {
 }
 
 std::map<std::string, double> 
-compare(const std::string &query_fp,  
+compare(const cv::Mat &query,  
         const std::vector<std::string> &database, 
         std::function<double(const cv::Mat,const cv::Mat)> func) { 
     std::map<std::string, double> result; 
-    auto query = read_image(query_fp);
 
     for (auto img_fp : database) {
         double distance; 
@@ -82,12 +81,18 @@ compare(const std::string &query_fp,
     return result; 
 }
 
+double metrics_constant(const cv::Mat, const cv::Mat) { 
+    return 1.0; 
+}
+
 int main(int argc, char *argv[]) { 
     // command line argument format 
     // 1: query image file path 
     // 2: database file path 
     // 3: which metrics to use 
     // 4: N -- number of results to show 
+
+    using namespace std; 
 
     if (argc != 5) 
         std::cerr << "expects four arguments" << std::endl;
@@ -97,8 +102,27 @@ int main(int argc, char *argv[]) {
     auto N = std::atoi(argv[ARG_N]);
     auto metrics = std::atoi(argv[METRIC]);
 
-    for (auto fp : images_fp) {
-        std::cout << fp << std::endl;
+    // read and compare the database images against query image  
+    function<double(const cv::Mat, const cv::Mat)> const_metrics; 
+    auto database = compare(query_img, images_fp, const_metrics);
+
+    // sort the distances 
+    typedef function<bool(pair<string, int>, pair<string, int>)> Comparator; 
+
+    Comparator comp = [](pair<string, int> elem1, pair<string, int> elem2) { 
+        return elem1.second < elem2.second; 
+    };
+
+    set<pair<string, int>, Comparator> 
+            database_sorted( database.begin(), database.end(), comp);
+
+    // print images in ascending order of distances 
+    auto iter = database_sorted.begin();
+    for (int i=0; i<N; i++) {
+        cout << "Image " << i << endl; 
+        cout << "Address: " << iter->first << endl; 
+        cout << "distance: " << iter->second << endl;
+        ++iter;
     }
 
     return 0; 
