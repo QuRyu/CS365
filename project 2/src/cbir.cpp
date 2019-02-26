@@ -11,8 +11,14 @@
 #include <cstring> 
 #include <string> 
 #include <map> 
+#include <set>
+#include <functional>
 
 #include <opencv2/opencv.hpp> 
+
+#include "metrics.hpp"
+#include "utilities.hpp"
+
 
 const int QUERY_IMAGE_FP = 1; 
 const int DATABASE_FP = 2; 
@@ -48,7 +54,8 @@ traverse_dir(const std::string &dir_fp) {
                 strstr(dp->d_name, ".arw") || 
                 strstr(dp->d_name, ".ppm") || 
                 strstr(dp->d_name, ".tif")) {
-            images_fp.push_back(dp->d_name);
+            auto fp = fp_prefix + std::string(dp->d_name);
+            images_fp.push_back(fp);
         }
     }
 
@@ -57,32 +64,27 @@ traverse_dir(const std::string &dir_fp) {
     return images_fp;
 }
 
-/**
- * Given the file path, return the image 
- */
-cv::Mat read_image(const std::string &fp) {
-    return cv::imread(fp);
-}
-
 std::map<std::string, double> 
 compare(const cv::Mat &query,  
         const std::vector<std::string> &database, 
-        std::function<double(const cv::Mat,const cv::Mat)> func) { 
+        std::function<double(const cv::Mat,const cv::Mat)> &func) { 
     std::map<std::string, double> result; 
 
+    std::cout << "here?" << std::endl;
     for (auto img_fp : database) {
         double distance; 
 
-        auto img = read_image(img_fp);
+        auto img = cv::imread(img_fp);
+        if (img.data == NULL) {
+            std::cerr << "Unable to read images" << std::endl; 
+            exit(-1);
+        }
+
         distance = func(query, img);
         result[img_fp] = distance;
     }
 
     return result; 
-}
-
-double metrics_constant(const cv::Mat, const cv::Mat) { 
-    return 1.0; 
 }
 
 int main(int argc, char *argv[]) { 
@@ -97,13 +99,14 @@ int main(int argc, char *argv[]) {
     if (argc != 5) 
         std::cerr << "expects four arguments" << std::endl;
 
-    auto query_img = read_image(argv[QUERY_IMAGE_FP]);
+    auto query_img = cv::imread(argv[QUERY_IMAGE_FP]);
     auto images_fp = traverse_dir(argv[DATABASE_FP]);
     auto N = std::atoi(argv[ARG_N]);
     auto metrics = std::atoi(argv[METRIC]);
 
+
     // read and compare the database images against query image  
-    function<double(const cv::Mat, const cv::Mat)> const_metrics; 
+    function<double(const cv::Mat, const cv::Mat)> const_metrics = baseline_hist_metric; 
     auto database = compare(query_img, images_fp, const_metrics);
 
     // sort the distances 
@@ -117,13 +120,13 @@ int main(int argc, char *argv[]) {
             database_sorted( database.begin(), database.end(), comp);
 
     // print images in ascending order of distances 
-    auto iter = database_sorted.begin();
-    for (int i=0; i<N; i++) {
-        cout << "Image " << i << endl; 
-        cout << "Address: " << iter->first << endl; 
-        cout << "distance: " << iter->second << endl;
-        ++iter;
-    }
+    //auto iter = database_sorted.begin();
+    //for (int i=0; i<N; i++) {
+        //cout << "Image " << i << endl; 
+        //cout << "Address: " << iter->first << endl; 
+        //cout << "distance: " << iter->second << endl;
+        //++iter;
+    //}
 
     return 0; 
 }
