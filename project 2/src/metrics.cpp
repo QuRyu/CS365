@@ -38,12 +38,27 @@ double ssd_metric(const cv::Mat query,const cv::Mat img){
     int i,j;
     for(i = 0; i < 5; i++){
         for(j = 0; j < 5; j++){
-            b_arr[i][j] = pow(query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[0]
-                            - img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[0],2);
-            g_arr[i][j] = pow(query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[1]
-                            - img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[1],2);
-            r_arr[i][j] = pow(query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[2]
-                            - img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[2],2);
+            // std::cout << "blue channel img value: " << img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[0] << std::endl;
+            // replace nan with 0
+            auto query_b = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[0];
+            auto query_g = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[1];
+            auto query_r = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[2];
+            auto img_b = img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[0];
+            auto img_g = img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[1];
+            auto img_r = img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[2];
+
+            if(isnan(query_b)) query_b = 0;
+            if(isnan(query_g)) query_g = 0;
+            if(isnan(query_r)) query_r = 0;
+            if(isnan(img_b)) img_b = 0;
+            if(isnan(img_g)) img_g = 0;
+            if(isnan(img_r)) img_r = 0;
+
+            b_arr[i][j] = pow(abs(query_b - img_b),2);
+            g_arr[i][j] = pow(abs(query_g - img_g),2);
+            r_arr[i][j] = pow(abs(query_r - img_r),2);
+
+            // std::cout << "LOOK " << b_arr[i][j] << " "<< g_arr[i][j]<< " " << r_arr[i][j] << std::endl;
         }
     }
 

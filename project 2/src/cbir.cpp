@@ -70,7 +70,7 @@ compare(const cv::Mat &query,
         std::function<double(const cv::Mat,const cv::Mat)> &func) { 
     std::map<std::string, double> result; 
 
-    std::cout << "here?" << std::endl;
+    // std::cout << "here1?" << std::endl;
     for (auto img_fp : database) {
         double distance; 
 
@@ -104,29 +104,34 @@ int main(int argc, char *argv[]) {
     auto N = std::atoi(argv[ARG_N]);
     auto metrics = std::atoi(argv[METRIC]);
 
+    if (query_img.data == NULL) {
+        std::cerr << "Unable to read the query image" << std::endl; 
+        exit(-1);
+    }
 
     // read and compare the database images against query image  
     function<double(const cv::Mat, const cv::Mat)> const_metrics = baseline_hist_metric; 
     auto database = compare(query_img, images_fp, const_metrics);
 
     // sort the distances 
-    typedef function<bool(pair<string, int>, pair<string, int>)> Comparator; 
+    typedef function<bool(pair<string, double>, pair<string, double>)> Comparator; 
 
-    Comparator comp = [](pair<string, int> elem1, pair<string, int> elem2) { 
+    Comparator comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
         return elem1.second < elem2.second; 
     };
 
-    set<pair<string, int>, Comparator> 
+    set<pair<string, double>, Comparator> 
             database_sorted( database.begin(), database.end(), comp);
 
     // print images in ascending order of distances 
-    //auto iter = database_sorted.begin();
-    //for (int i=0; i<N; i++) {
-        //cout << "Image " << i << endl; 
-        //cout << "Address: " << iter->first << endl; 
-        //cout << "distance: " << iter->second << endl;
-        //++iter;
-    //}
+    auto iter = database_sorted.begin();
+    for (int i=0; i<N; i++) {
+        cout << "Image " << i << endl;
+        cout << "Address: " << iter->first << endl; 
+        cout << "distance: " << iter->second << endl;
+        cout << endl;
+        ++iter;
+    }
 
     return 0; 
 }
