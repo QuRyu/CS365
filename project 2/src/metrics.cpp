@@ -77,25 +77,31 @@ double ssd_metric(const cv::Mat query,const cv::Mat img){
 // Baseline Histogram Matching
 double baseline_hist_metric(const cv::Mat query, const cv::Mat img) { 
 
-    // parameters for calcHist function 
-    int histSize = 8; 
-    int channels[] = {0, 1, 2};
-    float range[] = {0, 256};
-    const float *histRange = {range};
+    // Quantize the hue to 30 levels
+    // and the saturation to 32 levels
+    int hbins = 30, sbins = 32;
+    int histSize[] = {hbins, sbins};
+    // hue varies from 0 to 179, see cvtColor
+    float hranges[] = { 0, 180 };
+    // saturation varies from 0 (black-gray-white) to
+    // 255 (pure spectrum color)
+    float sranges[] = { 0, 256 };
+    const float* ranges[] = { hranges, sranges };;
+
+    int channels[] = {0, 1};
 
     // matrices to store histograms 
     cv::Mat hist_query, hist_image; 
 
-    cv::Mat mask;
-
     // calculate histograms 
-    cv::calcHist(&query, 1, channels, mask, hist_query, 1, &histSize, &histRange);
-    cv::calcHist(&img, 1, channels, mask, hist_image, 1, &histSize, &histRange);
+    cv::calcHist(&query, 1, channels, cv::Mat(), hist_query, 2, histSize, ranges, true, false);
+    cv::calcHist(&img, 1, channels, cv::Mat(), hist_image, 2, histSize, ranges, true, false);
+    
 
-    cv::normalize(hist_query, hist_query, 1, query.rows, cv::NORM_MINMAX);
-    cv::normalize(hist_image, hist_image, 1, img.rows, cv::NORM_MINMAX);
+    cv::normalize(hist_query, hist_query, 1, query.rows*query.cols, cv::NORM_MINMAX);
+    cv::normalize(hist_image, hist_image, 1, img.rows*img.cols, cv::NORM_MINMAX);
 
-    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_CORREL);
+    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_INTERSECT);
 }
 
 // Multiple Histogram Matching
