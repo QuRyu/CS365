@@ -126,5 +126,27 @@ double multi_hist_metric(const cv::Mat query, const cv::Mat img) {
 }
 
 // Integrating Texture and Color
+double texture_color_metric(const cv::Mat query, const cv::Mat img){
+    // Containers
+    cv::Mat query_gray, img_gray, query_x, query_y, img_x, img_y;
+
+    // Convert the images to Gray 
+    cv::cvtColor( query, query_gray, CV_BGR2GRAY );
+    cv::cvtColor( img, img_gray, CV_BGR2GRAY );
+
+    // Apply Sobel filter (x)
+    cv::Sobel(query_gray, query_x, query_gray.depth(), 1, 0);
+    cv::Sobel(img_gray, img_x, img_gray.depth(), 1, 0);
+
+    // Apply Sobel filter (y)
+    cv::Sobel(query_gray, query_y, query_gray.depth(), 0, 1);
+    cv::Sobel(img_gray, img_y, img_gray.depth(), 0, 1);
+
+    // Calculate histograms and compare
+    double correlatoin_x = baseline_hist_metric(query_x, img_x);
+    double correlatoin_y = baseline_hist_metric(query_y, img_y);
+
+    return (correlatoin_x+correlatoin_y)/2.0;
+}
 
 // Custom Distance Metric
