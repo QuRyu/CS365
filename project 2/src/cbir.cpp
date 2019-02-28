@@ -67,7 +67,7 @@ traverse_dir(const std::string &dir_fp) {
 std::map<std::string, double> 
 compare(const cv::Mat &query,  
         const std::vector<std::string> &database, 
-        std::function<double(const cv::Mat,const cv::Mat)> &func) { 
+        std::function<double(const cv::Mat,const cv::Mat, int)> &func) { 
     std::map<std::string, double> result; 
 
     // std::cout << "here1?" << std::endl;
@@ -80,7 +80,7 @@ compare(const cv::Mat &query,
             exit(-1);
         }
 
-        distance = func(query, img);
+        distance = func(query, img, 0);
         result[img_fp] = distance;
     }
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
     }
 
     // read and compare the database images against query image  
-    function<double(const cv::Mat, const cv::Mat)> const_metrics = baseline_hist_metric; 
+    function<double(const cv::Mat, const cv::Mat, int)> const_metrics = baseline_hist_metric; 
     auto database = compare(query_img, images_fp, const_metrics);
 
     // sort the distances 
