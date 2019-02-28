@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
     }
 
     // read and compare the database images against query image  
-    function<double(const cv::Mat, const cv::Mat)> const_metrics = baseline_hist_metric; 
+    function<double(const cv::Mat, const cv::Mat)> const_metrics = texture_color_metric; 
     auto database = compare(query_img, images_fp, const_metrics);
 
     // sort the distances 

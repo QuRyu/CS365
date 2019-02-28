@@ -92,7 +92,7 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img) {
     cv::calcHist(&query, 1, 0, mask, hist_query, 1, &histSize, &histRange);
     cv::calcHist(&img, 1, 0, mask, hist_image, 1, &histSize, &histRange);
  
-    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_INTERSECT);
+    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_CORREL);
 }
 
 // Multiple Histogram Matching
@@ -114,7 +114,11 @@ double texture_color_metric(const cv::Mat query, const cv::Mat img){
     cv::Sobel(query_gray, query_y, query_gray.depth(), 0, 1);
     cv::Sobel(img_gray, img_y, img_gray.depth(), 0, 1);
 
-    
+    // Calculate histograms and compare
+    double correlatoin_x = baseline_hist_metric(query_x, img_x);
+    double correlatoin_y = baseline_hist_metric(query_y, img_y);
+
+    return (correlatoin_x+correlatoin_y)/2.0;
 }
 
 // Custom Distance Metric
