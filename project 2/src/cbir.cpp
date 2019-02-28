@@ -87,6 +87,28 @@ compare(const cv::Mat &query,
     return result; 
 }
 
+std::function<double(const cv::Mat, const cv::Mat)>
+which_metrics(int i) {
+    std::function<double(const cv::Mat, const cv::Mat)> func;
+
+    switch(i) {
+        case 1: 
+            func = baseline_hist_metric;
+            break; 
+        case 2: 
+            func = multi_hist_metric;
+            break; 
+        case 3: 
+            func = texture_color_metric;
+            break; 
+        default: 
+            std::cerr << "unexpected metrics argument " << i << std::endl;
+            exit(-1);
+    }
+
+    return func; 
+}
+
 int main(int argc, char *argv[]) { 
     // command line argument format 
     // 1: query image file path 
@@ -101,23 +123,24 @@ int main(int argc, char *argv[]) {
 
     auto query_img = cv::imread(argv[QUERY_IMAGE_FP]);
     auto images_fp = traverse_dir(argv[DATABASE_FP]);
-    auto N = std::atoi(argv[ARG_N]);
     auto metrics = std::atoi(argv[METRIC]);
+    auto N = std::atoi(argv[ARG_N]);
 
     if (query_img.data == NULL) {
         std::cerr << "Unable to read the query image" << std::endl; 
         exit(-1);
     }
 
+    auto metrics_pick = which_metrics(metrics);
+
     // read and compare the database images against query image  
-    function<double(const cv::Mat, const cv::Mat)> const_metrics = texture_color_metric; 
-    auto database = compare(query_img, images_fp, const_metrics);
+    auto database = compare(query_img, images_fp, metrics_pick);
 
     // sort the distances 
     typedef function<bool(pair<string, double>, pair<string, double>)> Comparator; 
 
     Comparator comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
-        return elem1.second < elem2.second; 
+        return elem1.second > elem2.second; 
     };
 
     set<pair<string, double>, Comparator> 
