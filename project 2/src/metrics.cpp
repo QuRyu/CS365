@@ -86,7 +86,7 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img) {
     // saturation varies from 0 (black-gray-white) to
     // 255 (pure spectrum color)
     float sranges[] = { 0, 256 };
-    const float* ranges[] = { hranges, sranges };;
+    const float* ranges[] = { hranges, sranges };
 
     int channels[] = {0, 1};
 
@@ -131,28 +131,70 @@ double multi_hist_metric(const cv::Mat query, const cv::Mat img) {
 
 }
 
+// helper function for texture_color_metric
+double single_color_hist(const cv::Mat query, const cv::Mat img) { 
+    // Quantize the hue to 30 levels
+    // and the saturation to 32 levels
+    int hbins = 30, sbins = 32;
+    int histSize[] = {hbins, sbins};
+    // hue varies from 0 to 179, see cvtColor
+    float hranges[] = { 0, 180 };
+    // saturation varies from 0 (black-gray-white) to
+    // 255 (pure spectrum color)
+    float sranges[] = { 0, 256 };
+    const float* ranges[] = { hranges, sranges };
+
+    // matrices to store histograms 
+    cv::Mat hist_query, hist_image; 
+
+    // calculate histograms 
+    cv::calcHist(&query, 1, 0, cv::Mat(), hist_query, 1, histSize, ranges, true, false);
+    cv::calcHist(&img, 1, 0, cv::Mat(), hist_image, 1, histSize, ranges, true, false);
+    
+
+    cv::normalize(hist_query, hist_query, 1, query.rows*query.cols, cv::NORM_MINMAX);
+    cv::normalize(hist_image, hist_image, 1, img.rows*img.cols, cv::NORM_MINMAX);
+
+    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_INTERSECT);
+}
+
 // Integrating Texture and Color
 double texture_color_metric(const cv::Mat query, const cv::Mat img){
+    // Color 
+    std::vector<cv::Mat> query_rgb, img_rgb;
+    cv::split(query, query_rgb);
+    cv::split(img, img_rgb);
+
+    auto b_cmp = single_color_hist(query_rgb[0], img_rgb[0]);
+    auto g_cmp = single_color_hist(query_rgb[1], img_rgb[1]);
+    auto r_cmp = single_color_hist(query_rgb[2], img_rgb[2]);
+
+
+    // Texture 
     // Containers
     cv::Mat query_gray, img_gray, query_x, query_y, img_x, img_y;
+    cv::Mat query_mag, img_mag; 
 
     // Convert the images to Gray 
-    cv::cvtColor( query, query_gray, CV_BGR2GRAY );
-    cv::cvtColor( img, img_gray, CV_BGR2GRAY );
+    cv::cvtColor( query, query_gray, cv::COLOR_BGR2GRAY );
+    cv::cvtColor( img, img_gray, cv::COLOR_BGR2GRAY );
 
     // Apply Sobel filter (x)
-    cv::Sobel(query_gray, query_x, query_gray.depth(), 1, 0);
-    cv::Sobel(img_gray, img_x, img_gray.depth(), 1, 0);
+    cv::Sobel(query_gray, query_x, CV_32F, 1, 0);
+    cv::Sobel(img_gray, img_x, CV_32F, 1, 0);
 
     // Apply Sobel filter (y)
-    cv::Sobel(query_gray, query_y, query_gray.depth(), 0, 1);
-    cv::Sobel(img_gray, img_y, img_gray.depth(), 0, 1);
+    cv::Sobel(query_gray, query_y, CV_32F, 0, 1);
+    cv::Sobel(img_gray, img_y, CV_32F, 0, 1);
 
-    // Calculate histograms and compare
-    double correlatoin_x = baseline_hist_metric(query_x, img_x);
-    double correlatoin_y = baseline_hist_metric(query_y, img_y);
+    // calculate the magnitude of gradient
+    cv::magnitude(query_x, query_y, query_mag);
+    cv::magnitude(img_x, img_y, img_mag);
 
-    return (correlatoin_x+correlatoin_y)/2.0;
+    auto mag_cmp = single_color_hist(query_mag, img_mag);
+
+
+    return b_cmp*0.1667 + g_cmp*0.1667 + r_cmp*0.1667 + mag_cmp * 0.5; 
 }
 
 // Custom Distance Metric
