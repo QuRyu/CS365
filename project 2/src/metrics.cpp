@@ -111,5 +111,23 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img) {
 // Multiple Histogram Matching
 
 // Integrating Texture and Color
+double texture_color_metric(const cv::Mat query, const cv::Mat img){
+    // Containers
+    cv::Mat query_gray, img_gray, query_x, query_y, img_x, img_y;
+
+    // Convert the images to Gray 
+    cv::cvtColor( query, query_gray, CV_BGR2GRAY );
+    cv::cvtColor( img, img_gray, CV_BGR2GRAY );
+
+    // Apply Sobel filter (x)
+    cv::Sobel(query_gray, query_x, query_gray.depth(), 1, 0);
+    cv::Sobel(img_gray, img_x, img_gray.depth(), 1, 0);
+
+    // Apply Sobel filter (y)
+    cv::Sobel(query_gray, query_y, query_gray.depth(), 0, 1);
+    cv::Sobel(img_gray, img_y, img_gray.depth(), 0, 1);
+
+    
+}
 
 // Custom Distance Metric
