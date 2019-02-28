@@ -75,8 +75,7 @@ double ssd_metric(const cv::Mat query,const cv::Mat img){
 }
 
 // Baseline Histogram Matching
-double baseline_hist_metric(const cv::Mat query, const cv::Mat img, 
-                            int comp_metrics) { 
+double baseline_hist_metric(const cv::Mat query, const cv::Mat img) { 
 
     cv::Mat query_grascale, img_grayscle; 
 
@@ -97,7 +96,7 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img,
     cv::calcHist(&query_grascale, 1, 0, mask, hist_query, 1, &histSize, &histRange);
     cv::calcHist(&img_grayscle, 1, 0, mask, hist_image, 1, &histSize, &histRange);
  
-    return cv::compareHist(hist_query, hist_image, comp_metrics);
+    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_INTERSECT);
 }
 
 // Multiple Histogram Matching
