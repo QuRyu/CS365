@@ -18,6 +18,8 @@
 
 #include "utilities.cpp"
 
+using namespace cv;
+using namespace std;
 
 // Baseline Matching
 double ssd_metric(const cv::Mat query,const cv::Mat img){
@@ -151,7 +153,7 @@ double single_color_hist(const cv::Mat query, const cv::Mat img) {
     cv::normalize(hist_query, hist_query, 1, query.rows*query.cols, cv::NORM_MINMAX);
     cv::normalize(hist_image, hist_image, 1, img.rows*img.cols, cv::NORM_MINMAX);
 
-    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_INTERSECT);
+    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_CORREL);
 }
 
 // Integrating Texture and Color
@@ -212,4 +214,25 @@ double custom_distance_metric(const cv::Mat query, const cv::Mat img){
     double texture_color_cmp = texture_color_metric(query_middle, img_middle);
 
     return whole_cmp * 0.5 + texture_color_cmp * 0.5;
+}
+
+double other_matching(const Mat query, const Mat img) { 
+    Mat query_gray, img_gray,
+        query_lap, img_lap,
+        query_lap_abs, img_lap_abs; 
+
+    GaussianBlur(query, query, Size(3, 3), 0);
+    GaussianBlur(img, img, Size(3, 3), 0);
+
+
+    cvtColor(query, query_gray, COLOR_BGR2GRAY);
+    cvtColor(img, img_gray, COLOR_BGR2GRAY);
+
+    Laplacian(query_gray, query_lap, CV_32F);
+    Laplacian(img_gray, img_lap, CV_32F);
+
+    convertScaleAbs(query_lap, query_lap_abs);
+    convertScaleAbs(img_lap, img_lap_abs);
+
+    return single_color_hist(query_lap_abs, img_lap_abs);
 }

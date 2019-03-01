@@ -13,4 +13,6 @@ double texture_color_metric(const cv::Mat, const cv::Mat);
 
 double custom_distance_metric(const cv::Mat query, const cv::Mat img);
 
+double other_matching(const cv::Mat, const cv::Mat);
+
 #endif 

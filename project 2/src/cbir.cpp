@@ -117,6 +117,9 @@ auto which_metrics(int i) {
         case 4:
             func = custom_distance_metric;
             break;
+        case 5:
+            func = other_matching;
+            break; 
         default: 
             std::cerr << "unexpected metrics argument " << i << std::endl;
             exit(-1);
