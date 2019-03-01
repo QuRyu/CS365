@@ -100,7 +100,7 @@ which_metrics(int i) {
             break; 
         case 3: 
             func = texture_color_metric;
-            break; 
+            break;
         default: 
             std::cerr << "unexpected metrics argument " << i << std::endl;
             exit(-1);

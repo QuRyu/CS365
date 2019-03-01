@@ -193,8 +193,27 @@ double texture_color_metric(const cv::Mat query, const cv::Mat img){
 
     auto mag_cmp = single_color_hist(query_mag, img_mag);
 
-
     return b_cmp*0.1667 + g_cmp*0.1667 + r_cmp*0.1667 + mag_cmp * 0.5; 
 }
 
 // Custom Distance Metric
+double custom_distance_metric(const cv::Mat query, const cv::Mat img){
+    // whole img single hist
+    double whole_cmp = baseline_hist_metric(query, img);
+
+    // center 100*100 texture & color
+    int query_row_mid = query.rows/2 - 1; // midpoint-1 is the central index
+    int query_col_mid = query.cols/2 - 1;
+
+    int img_row_mid = img.rows/2 - 1;
+    int img_col_mid = img.cols/2 - 1;
+
+    cv::Mat query_middle(query, cv::Rect(query_col_mid-50, query_row_mid-50,
+                    query_col_mid+50, query_row_mid+50));
+    cv::Mat img_middle(img, cv::Rect(img_col_mid-50, img_row_mid-50,
+                    img_col_mid+50, img_row_mid+50));
+
+    double texture_color_cmp = texture_color_metric(query_middle, img_middle);
+
+    return whole_cmp * 0.5 + texture_color_cmp * 0.5;
+}
