@@ -119,6 +119,9 @@ auto which_metrics(int i) {
             break;
         case 5:
             func = other_matching;
+            comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
+                       return elem1.second < elem2.second; 
+                   };
             break; 
         default: 
             std::cerr << "unexpected metrics argument " << i << std::endl;

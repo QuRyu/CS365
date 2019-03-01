@@ -228,8 +228,8 @@ double other_matching(const Mat query, const Mat img) {
     cvtColor(query, query_gray, COLOR_BGR2GRAY);
     cvtColor(img, img_gray, COLOR_BGR2GRAY);
 
-    Laplacian(query_gray, query_lap, CV_32F);
-    Laplacian(img_gray, img_lap, CV_32F);
+    Laplacian(query_gray, query_lap, CV_16S);
+    Laplacian(img_gray, img_lap, CV_16S);
 
     convertScaleAbs(query_lap, query_lap_abs);
     convertScaleAbs(img_lap, img_lap_abs);
