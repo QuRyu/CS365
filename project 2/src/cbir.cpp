@@ -13,12 +13,17 @@
 #include <map> 
 #include <set>
 #include <functional>
+#include <tuple>
 
 #include <opencv2/opencv.hpp> 
 
 #include "metrics.hpp"
 #include "utilities.hpp"
 
+using namespace std;
+using namespace cv;
+
+typedef function<bool(pair<string, double>, pair<string, double>)> Comparator; 
 
 const int QUERY_IMAGE_FP = 1; 
 const int DATABASE_FP = 2; 
@@ -87,11 +92,19 @@ compare(const cv::Mat &query,
     return result; 
 }
 
-std::function<double(const cv::Mat, const cv::Mat)>
-which_metrics(int i) {
+auto which_metrics(int i) {
     std::function<double(const cv::Mat, const cv::Mat)> func;
+    Comparator comp = 
+        [](pair<string, double> elem1, pair<string, double> elem2) {
+                       return elem1.second > elem2.second; 
+        };
 
     switch(i) {
+        case 0: 
+            func = ssd_metric;
+            comp = [](pair<string, double> elem1, pair<string, double> elem2) {
+                       return elem1.second > elem2.second; 
+                   };
         case 1: 
             func = baseline_hist_metric;
             break; 
@@ -106,7 +119,7 @@ which_metrics(int i) {
             exit(-1);
     }
 
-    return func; 
+    return std::make_tuple(func, comp); 
 }
 
 int main(int argc, char *argv[]) { 
@@ -115,8 +128,6 @@ int main(int argc, char *argv[]) {
     // 2: database file path 
     // 3: which metrics to use 
     // 4: N -- number of results to show 
-
-    using namespace std; 
 
     if (argc != 5) 
         std::cerr << "expects four arguments" << std::endl;
@@ -131,18 +142,14 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    auto metrics_pick = which_metrics(metrics);
+    auto tup = which_metrics(metrics);
+    auto metrics_pick = get<0>(tup);
+    auto comp = get<1>(tup);
 
     // read and compare the database images against query image  
     auto database = compare(query_img, images_fp, metrics_pick);
 
     // sort the distances 
-    typedef function<bool(pair<string, double>, pair<string, double>)> Comparator; 
-
-    Comparator comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
-        return elem1.second > elem2.second; 
-    };
-
     set<pair<string, double>, Comparator> 
             database_sorted( database.begin(), database.end(), comp);
 
