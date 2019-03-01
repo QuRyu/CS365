@@ -98,8 +98,8 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img) {
     cv::calcHist(&img, 1, channels, cv::Mat(), hist_image, 2, histSize, ranges, true, false);
     
 
-    cv::normalize(hist_query, hist_query, 1, query.rows*query.cols, cv::NORM_MINMAX);
-    cv::normalize(hist_image, hist_image, 1, img.rows*img.cols, cv::NORM_MINMAX);
+    cv::normalize(hist_query, hist_query, 0, query.rows*query.cols, cv::NORM_MINMAX);
+    cv::normalize(hist_image, hist_image, 0, img.rows*img.cols, cv::NORM_MINMAX);
 
     return cv::compareHist(hist_query, hist_image, cv::HISTCMP_INTERSECT);
 }
