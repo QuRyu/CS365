@@ -39,7 +39,6 @@ double ssd_metric(const cv::Mat query,const cv::Mat img){
     int i,j;
     for(i = 0; i < 5; i++){
         for(j = 0; j < 5; j++){
-            // std::cout << "blue channel img value: " << img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[0] << std::endl;
             // replace nan with 0
             auto query_b = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[0];
             auto query_g = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[1];
@@ -58,8 +57,6 @@ double ssd_metric(const cv::Mat query,const cv::Mat img){
             b_arr[i][j] = pow(abs(query_b - img_b),2);
             g_arr[i][j] = pow(abs(query_g - img_g),2);
             r_arr[i][j] = pow(abs(query_r - img_r),2);
-
-            // std::cout << "LOOK " << b_arr[i][j] << " "<< g_arr[i][j]<< " " << r_arr[i][j] << std::endl;
         }
     }
 
@@ -108,6 +105,7 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img) {
 double multi_hist_metric(const cv::Mat query, const cv::Mat img) { 
     using namespace cv;
 
+    std::cout << "here" << std::endl;
     auto query_width = query.cols, query_height = query.rows,
          img_width = img.cols, img_height = img.rows;
     Mat query_left(query, Rect(0, 0, query_width/5, query_height)),
@@ -116,10 +114,11 @@ double multi_hist_metric(const cv::Mat query, const cv::Mat img) {
         query_middle(query, Rect(query_width/5, 0,
                     query_width*4/5, img_height));
 
+    std::cout << "here" << std::endl;
+
     Mat img_left(img, Rect(0, 0, img_width/5, img_height)),
         img_right(img, Rect(img_width*4/5, 0, img_width/5, img_height)),
         img_middle(img, Rect(img_width/5, 0, img_width*4/5, img_height));
-
 
     auto left_cmp = baseline_hist_metric(query_left, img_left);
     auto right_cmp = baseline_hist_metric(query_right, img_right);
@@ -209,9 +208,9 @@ double custom_distance_metric(const cv::Mat query, const cv::Mat img){
     int img_col_mid = img.cols/2 - 1;
 
     cv::Mat query_middle(query, cv::Rect(query_col_mid-50, query_row_mid-50,
-                    query_col_mid+50, query_row_mid+50));
+                    100, 100));
     cv::Mat img_middle(img, cv::Rect(img_col_mid-50, img_row_mid-50,
-                    img_col_mid+50, img_row_mid+50));
+                    100, 100));
 
     double texture_color_cmp = texture_color_metric(query_middle, img_middle);
 

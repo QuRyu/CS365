@@ -103,8 +103,9 @@ auto which_metrics(int i) {
         case 0: 
             func = ssd_metric;
             comp = [](pair<string, double> elem1, pair<string, double> elem2) {
-                       return elem1.second > elem2.second; 
+                       return elem1.second < elem2.second; 
                    };
+            break;
         case 1: 
             func = baseline_hist_metric;
             break; 
@@ -113,6 +114,9 @@ auto which_metrics(int i) {
             break; 
         case 3: 
             func = texture_color_metric;
+            break;
+        case 4:
+            func = custom_distance_metric;
             break;
         default: 
             std::cerr << "unexpected metrics argument " << i << std::endl;
