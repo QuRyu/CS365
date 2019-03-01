@@ -102,7 +102,7 @@ auto which_metrics(int i) {
         case 0: 
             func = ssd_metric;
             comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
-                       return elem1.second > elem2.second; 
+                       return elem1.second < elem2.second; 
                    };
             break;
         case 1: 
