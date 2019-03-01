@@ -105,20 +105,17 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img) {
 double multi_hist_metric(const cv::Mat query, const cv::Mat img) { 
     using namespace cv;
 
-    std::cout << "here" << std::endl;
     auto query_width = query.cols, query_height = query.rows,
          img_width = img.cols, img_height = img.rows;
     Mat query_left(query, Rect(0, 0, query_width/5, query_height)),
         query_right(query, Rect(query_width*4/5, 0, 
                 query_width/5, query_height)), 
         query_middle(query, Rect(query_width/5, 0,
-                    query_width*4/5, img_height));
-
-    std::cout << "here" << std::endl;
+                    query_width*3/5, img_height));
 
     Mat img_left(img, Rect(0, 0, img_width/5, img_height)),
         img_right(img, Rect(img_width*4/5, 0, img_width/5, img_height)),
-        img_middle(img, Rect(img_width/5, 0, img_width*4/5, img_height));
+        img_middle(img, Rect(img_width/5, 0, img_width*3/5, img_height));
 
     auto left_cmp = baseline_hist_metric(query_left, img_left);
     auto right_cmp = baseline_hist_metric(query_right, img_right);

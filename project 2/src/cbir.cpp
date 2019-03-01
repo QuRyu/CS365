@@ -75,7 +75,6 @@ compare(const cv::Mat &query,
         std::function<double(const cv::Mat,const cv::Mat)> &func) { 
     std::map<std::string, double> result; 
 
-    // std::cout << "here1?" << std::endl;
     for (auto img_fp : database) {
         double distance; 
 
@@ -95,15 +94,15 @@ compare(const cv::Mat &query,
 auto which_metrics(int i) {
     std::function<double(const cv::Mat, const cv::Mat)> func;
     Comparator comp = 
-        [](pair<string, double> elem1, pair<string, double> elem2) {
+        [](pair<string, double> elem1, pair<string, double> elem2) -> bool {
                        return elem1.second > elem2.second; 
         };
 
     switch(i) {
         case 0: 
             func = ssd_metric;
-            comp = [](pair<string, double> elem1, pair<string, double> elem2) {
-                       return elem1.second < elem2.second; 
+            comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
+                       return elem1.second > elem2.second; 
                    };
             break;
         case 1: 
