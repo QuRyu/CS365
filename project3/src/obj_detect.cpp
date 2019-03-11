@@ -7,6 +7,7 @@
 
 #include <string>
 #include <cstdio>
+#include <cmath>
 
 #include <opencv2/opencv.hpp>
 
@@ -19,7 +20,7 @@ using namespace cv;
 
 template <typename T> 
 void displayRegmap(const Mat &regmap, const string &window_name, int N) {
-    Mat regmap_colored(regmap.rows, regmap.cols, CV_8U);
+    Mat regmap_colored(regmap.rows, regmap.cols, CV_8UC1);
     vector<unsigned short> colors(N);
 
     // assign colors to each region 
@@ -27,8 +28,8 @@ void displayRegmap(const Mat &regmap, const string &window_name, int N) {
     for(int i=1; i<N; i++) 
 	colors[i] = 255/i;
 
-    for(int i=0; i<regmap_colored.rows; i++) 
-	for(int j=0; j<regmap_colored.cols; j++) 
+    for (int i=0; i<regmap_colored.rows; i++) 
+	for (int j=0; j<regmap_colored.cols; j++) 
 	    regmap_colored.at<unsigned char>(i, j) = 
 		colors[regmap.at<T>(i, j)];
 
@@ -36,11 +37,91 @@ void displayRegmap(const Mat &regmap, const string &window_name, int N) {
     imshow(window_name, regmap_colored);
 }
 
-int centralMoments(const int x_moment, const int y_moment, 
-	           const Mat &stats, const Mat &centroids,
-		   int label) {
-    //int num_pixels = stats(label, CC_STAT_AREA);
+template <typename T>
+double centralMoments(const int x_moment, const int y_moment,  
+		   const Mat &img, const Mat &regmap, 
+		   const Mat &stats, const Mat &centroids, int label) {
+    // extract variables for readability
+    double centroid_x = centroids.at<double>(label, 0); 
+    double centroid_y = centroids.at<double>(label, 1); 
+
+    int num_pixels = stats.at<int>(label, CC_STAT_AREA);
+    int left_x = stats.at<int>(label, CC_STAT_LEFT);
+    int top_y = stats.at<int>(label, CC_STAT_TOP);
+    int width = stats.at<int>(label, CC_STAT_WIDTH);
+    int height = stats.at<int>(label, CC_STAT_HEIGHT);
+
+    int right_x = left_x + width;
+    int down_y = top_y + height;
+
+    cout << "object label " << label << endl;
+    cout << "number of pixels " << num_pixels << endl;
+    cout << "left top corner (" << left_x << ", " << top_y 
+	<< "), width " << width << ", height " << height << endl;
+    cout << "centroid_x " << centroid_x << ", centroid_y " << centroid_y << endl;
+    cout << endl;
+
+    double sum = 0; 
+
+    for (int j=top_y; j<down_y; j++) {
+	for (int i=left_x; i<right_x; i++) {
+	    //cout << img.at<T>(i, j) << endl;
+	    //if (img.at<T>(i, j) != 0) printf("%u\n", img.at<T>(i, j));
+	    //cout << pow(i-centroid_x, x_moment) << " " << pow(j-centroid_y, y_moment) << " " << img.at<T>(i, j) << endl;
+	    double value = pow(i-centroid_x, x_moment) * pow(j-centroid_y, y_moment) * img.at<T>(i, j);
+	    sum += value; 
+	    //cout << value << " "; 
+	}
+	//cout << endl;
+    }
+
+    cout << "sum before scaling-invariant division " << sum << endl;
+    cout << endl;
+
+
+    sum = sum / num_pixels; // make it scaling invariant  
+
+    return sum; 
+
 }
+
+template <typename T>
+double orientation_alpha(const Mat &img, const Mat &regmap, 
+			 const Mat &stats, const Mat &centroids, int label) {
+    double u11 = centralMoments<T>(1, 1, img, regmap, stats, centroids, label);
+    double u20 = centralMoments<T>(2, 0, img, regmap, stats, centroids, label);
+    double u02 = centralMoments<T>(0, 2, img, regmap, stats, centroids, label);
+
+    double alpha = atan2(2*u11, u20-u02);
+
+    return alpha; 
+}
+
+template <typename T>
+double orientedCentralMoments(const Mat &img, const Mat &regmap, 
+			      const Mat &stats, const Mat &centroids, 
+			      double alpha, int label) {
+    // extract variables for readability
+    double centroid_x = centroids.at<double>(label, 0); 
+    double centroid_y = centroids.at<double>(label, 1); 
+
+    int num_pixels = stats.at<int>(label, CC_STAT_AREA);
+    int left_x = stats.at<int>(label, CC_STAT_LEFT);
+    int top_y = stats.at<int>(label, CC_STAT_TOP);
+    int width = stats.at<int>(label, CC_STAT_WIDTH);
+    int heigth = stats.at<int>(label, CC_STAT_HEIGHT);
+
+    double sum = 0; 
+    for (int i=left_x; i<width; i++) 
+	for (int j=top_y; j<heigth; j++) 
+	    sum += pow((j-centroid_y)*cos(alpha) + (i-centroid_x)*sin(alpha), 2)
+		    * img.at<T>(i, j); 
+
+    sum = sum / num_pixels;
+
+    return sum; 
+}
+
 
 Mat process_img(const Mat &src) {
     // threshold 
@@ -65,10 +146,16 @@ void process_one_image(const string &img_fp) {
     int label = cv::connectedComponentsWithStats(processed, regmap, 
 	                                         stats, centroids, 8, CV_32S);
 
+    auto alpha = orientation_alpha<unsigned char>(regmap, regmap, stats, centroids, 1);
+    auto moment = orientedCentralMoments<unsigned char>(processed, regmap, stats, centroids, alpha, 1);
+
+    cout << "alpha " << alpha << ", moment " << moment << endl;
+
     namedWindow(img_fp, 1);
     imshow(img_fp, processed);
 
     displayRegmap<int>(regmap, "region map", label);
+
 
     waitKey(0);
 
