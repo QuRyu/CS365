@@ -16,21 +16,31 @@
 using namespace std;
 using namespace cv;
 
-static const unsigned char BACKGROUND = 255;
-static const unsigned char FOREGROUND = 0; 
 
-using elem_type = unsigned char; 
+template <typename T> 
+void displayRegmap(const Mat &regmap, const string &window_name, int N) {
+    Mat regmap_colored(regmap.rows, regmap.cols, CV_8U);
+    vector<unsigned short> colors(N);
 
+    // assign colors to each region 
+    colors[0] = 0; 
+    for(int i=1; i<N; i++) 
+	colors[i] = 255/i;
 
-pair<int, Mat> comp_seg(const Mat &src) { 
-    Mat regmap; 
+    for(int i=0; i<regmap_colored.rows; i++) 
+	for(int j=0; j<regmap_colored.cols; j++) 
+	    regmap_colored.at<unsigned char>(i, j) = 
+		colors[regmap.at<T>(i, j)];
 
-    int label = cv::connectedComponents(src, regmap); 
-
-    return make_pair(label, regmap);
+    namedWindow(window_name, 1);
+    imshow(window_name, regmap_colored);
 }
 
-
+int centralMoments(const int x_moment, const int y_moment, 
+	           const Mat &stats, const Mat &centroids,
+		   int label) {
+    //int num_pixels = stats(label, CC_STAT_AREA);
+}
 
 Mat process_img(const Mat &src) {
     // threshold 
@@ -44,15 +54,26 @@ Mat process_img(const Mat &src) {
 }
 
 void process_one_image(const string &img_fp) {
+    // read in the image 
     auto img = imread(img_fp);
+
+    // process the image for segmentation  
     auto processed = process_img(img);
+
+    // segment the image 
+    Mat regmap, stats, centroids; 
+    int label = cv::connectedComponentsWithStats(processed, regmap, 
+	                                         stats, centroids, 8, CV_32S);
 
     namedWindow(img_fp, 1);
     imshow(img_fp, processed);
 
+    displayRegmap<int>(regmap, "region map", label);
+
     waitKey(0);
 
     destroyWindow(img_fp);
+    destroyWindow("region map");
 }
 
 void process_images(const vector<string> &images_fp) {
