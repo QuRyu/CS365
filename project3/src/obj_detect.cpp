@@ -13,6 +13,7 @@
 
 #include "imgproc.hpp"
 #include "utilities.hpp"
+#include "features.hpp"
 
 using namespace std;
 using namespace cv;
@@ -68,7 +69,7 @@ double centralMoments(const int x_moment, const int y_moment,
 	    //cout << img.at<T>(i, j) << endl;
 	    //if (img.at<T>(i, j) != 0) printf("%u\n", img.at<T>(i, j));
 	    //cout << pow(i-centroid_x, x_moment) << " " << pow(j-centroid_y, y_moment) << " " << img.at<T>(i, j) << endl;
-	    double value = pow(i-centroid_x, x_moment) * pow(j-centroid_y, y_moment) * img.at<T>(i, j);
+	    double value = pow(i-centroid_x, x_moment) * pow(j-centroid_y, y_moment) * img.at<T>(j, i);
 	    sum += value; 
 	    //cout << value << " "; 
 	}
@@ -151,6 +152,9 @@ void process_one_image(const string &img_fp) {
 
     cout << "alpha " << alpha << ", moment " << moment << endl;
 
+    double f[9];
+    compute_features(img, f);
+
     namedWindow(img_fp, 1);
     imshow(img_fp, processed);
 
@@ -206,7 +210,8 @@ int main(int argc, char *argv[]) {
 
     auto images_fp = traverse_dir(img_fp);
 
-    process_one_image(images_fp[0]);
+    printf("%s\n", images_fp[5].c_str());
+    process_one_image(images_fp[5]);
 
 
 
