@@ -1,6 +1,9 @@
 /*
+ * cbir.cpp
  *
  * CS365 19 Spring 
+ *
+ * Iris Lian and Qingbo Liu
  *
  * Assignment 2: Content-based image retrieval 
  *
@@ -70,9 +73,9 @@ traverse_dir(const std::string &dir_fp) {
 }
 
 std::map<std::string, double> 
-compare(const cv::Mat &query,  
+compare(const vector<Mat> &query,  
         const std::vector<std::string> &database, 
-        std::function<double(const cv::Mat,const cv::Mat)> &func) { 
+        std::function<double(const vector<Mat>,const cv::Mat)> &func) { 
     std::map<std::string, double> result; 
 
     for (auto img_fp : database) {
@@ -91,12 +94,13 @@ compare(const cv::Mat &query,
     return result; 
 }
 
-auto which_metrics(int i) {
-    std::function<double(const cv::Mat, const cv::Mat)> func;
+auto which_metrics(int i, Mat query_img) {
+    std::function<double(const vector<Mat>, const cv::Mat)> func;
     Comparator comp = 
         [](pair<string, double> elem1, pair<string, double> elem2) -> bool {
                        return elem1.second > elem2.second; 
         };
+    vector<Mat> query_list;
 
     switch(i) {
         case 0: 
@@ -104,31 +108,58 @@ auto which_metrics(int i) {
             comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
                        return elem1.second < elem2.second; 
                    };
+            query_list.push_back(query_img);
             break;
         case 1: 
             func = baseline_hist_metric;
+            query_list.push_back(calc_histogram(query_img, 0)); // whole
             break; 
         case 2: 
+            {
             func = multi_hist_metric;
+            int query_width = query_img.cols, query_height = query_img.rows;
+            Mat query_left(query_img, Rect(0, 0, query_width/5, query_height)),
+                query_right(query_img, Rect(query_width*4/5, 0, 
+                            query_width/5, query_height)), 
+                query_middle(query_img, Rect(query_width/5, 0,
+                            query_width*3/5, query_height));
+            query_list.push_back(calc_histogram(query_left, 0)); // left
+            query_list.push_back(calc_histogram(query_right, 0)); // right
+            query_list.push_back(calc_histogram(query_middle, 0)); // middle
+            query_list.push_back(calc_histogram(query_img, 0)); // whole
+            }
             break; 
         case 3: 
             func = texture_color_metric;
+            query_list = calc_textColorHists(query_img);
             break;
         case 4:
+            {
             func = custom_distance_metric;
+            query_list.push_back(calc_histogram(query_img, 0)); // whole
+            int query_row_mid = query_img.rows/2 - 1; // midpoint-1 is the central index
+            int query_col_mid = query_img.cols/2 - 1;
+            Mat query_middle(query_img, cv::Rect(query_col_mid-50, query_row_mid-50,
+                    100, 100));
+            vector<Mat> tempHists = calc_textColorHists(query_middle);
+            for(int i = 0; i < tempHists.size(); i++){
+                query_list.push_back(tempHists[i]);
+            }
+            }
             break;
         case 5:
             func = other_matching;
             comp = [](pair<string, double> elem1, pair<string, double> elem2) { 
                        return elem1.second < elem2.second; 
                    };
+            query_list.push_back(other_matching_helper(query_img));
             break; 
         default: 
             std::cerr << "unexpected metrics argument " << i << std::endl;
             exit(-1);
     }
 
-    return std::make_tuple(func, comp); 
+    return std::make_tuple(func, comp, query_list); 
 }
 
 int main(int argc, char *argv[]) { 
@@ -151,12 +182,13 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    auto tup = which_metrics(metrics);
+    auto tup = which_metrics(metrics, query_img);
     auto metrics_pick = get<0>(tup);
     auto comp = get<1>(tup);
+    auto query = get<2>(tup);
 
     // read and compare the database images against query image  
-    auto database = compare(query_img, images_fp, metrics_pick);
+    auto database = compare(query, images_fp, metrics_pick);
 
     // sort the distances 
     set<pair<string, double>, Comparator> 

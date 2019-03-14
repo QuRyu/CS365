@@ -1,7 +1,9 @@
 /*
  * metrics.cpp
  *
- * CS365 19 Spring 
+ * CS365 19 Spring
+ *
+ * Iris Lian and Qingbo Liu
  *
  * Assignment 2: Content-based image retrieval 
  *
@@ -22,12 +24,12 @@ using namespace cv;
 using namespace std;
 
 // Baseline Matching
-double ssd_metric(const cv::Mat query,const cv::Mat img){
+double ssd_metric(const vector<Mat> query,const cv::Mat img){
     double distance = 0.0;
 
     // calculate the start, end of the 5x5 piece in both query and img
-    int query_row_start = query.rows/2 - 3; // midpoint-1 is the central index
-    int query_col_start = query.cols/2 - 3;
+    int query_row_start = query[0].rows/2 - 3; // midpoint-1 is the central index
+    int query_col_start = query[0].cols/2 - 3;
 
     int img_row_start = img.rows/2 - 3;
     int img_col_start = img.cols/2 - 3;
@@ -42,9 +44,9 @@ double ssd_metric(const cv::Mat query,const cv::Mat img){
     for(i = 0; i < 5; i++){
         for(j = 0; j < 5; j++){
             // replace nan with 0
-            auto query_b = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[0];
-            auto query_g = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[1];
-            auto query_r = query.at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[2];
+            auto query_b = query[0].at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[0];
+            auto query_g = query[0].at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[1];
+            auto query_r = query[0].at<cv::Vec3f>(query_row_start+i,query_col_start+j).val[2];
             auto img_b = img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[0];
             auto img_g = img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[1];
             auto img_r = img.at<cv::Vec3f>(img_row_start+i,img_col_start+j).val[2];
@@ -73,12 +75,12 @@ double ssd_metric(const cv::Mat query,const cv::Mat img){
     return distance;
 }
 
-// Baseline Histogram Matching
-double baseline_hist_metric(const cv::Mat query, const cv::Mat img) { 
-
+// helper funciton 0: baseline 1: single color
+cv::Mat calc_histogram(Mat img, int k){
+    Mat hist;
     // Quantize the hue to 30 levels
     // and the saturation to 32 levels
-    int hbins = 30, sbins = 32;
+    int hbins = 30, sbins = 32; // 30 32; 15 16
     int histSize[] = {hbins, sbins};
     // hue varies from 0 to 179, see cvtColor
     float hranges[] = { 0, 180 };
@@ -86,153 +88,118 @@ double baseline_hist_metric(const cv::Mat query, const cv::Mat img) {
     // 255 (pure spectrum color)
     float sranges[] = { 0, 256 };
     const float* ranges[] = { hranges, sranges };
-
     int channels[] = {0, 1};
 
-    // matrices to store histograms 
-    cv::Mat hist_query, hist_image; 
+    if(k == 0){
+        calcHist(&img, 1, channels, cv::Mat(), hist, 2, histSize, ranges, true, false);
+        normalize(hist, hist, 0, img.rows*img.cols, cv::NORM_MINMAX);
+    }
+    else if(k == 1){
+        calcHist(&img, 1, 0, cv::Mat(), hist, 1, histSize, ranges, true, false);
+        normalize(hist, hist, 1, img.rows*img.cols, cv::NORM_MINMAX);
+    }
 
-    // calculate histograms 
-    cv::calcHist(&query, 1, channels, cv::Mat(), hist_query, 2, histSize, ranges, true, false);
-    cv::calcHist(&img, 1, channels, cv::Mat(), hist_image, 2, histSize, ranges, true, false);
-    
-
-    cv::normalize(hist_query, hist_query, 0, query.rows*query.cols, cv::NORM_MINMAX);
-    cv::normalize(hist_image, hist_image, 0, img.rows*img.cols, cv::NORM_MINMAX);
-
-    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_INTERSECT);
+    return hist;
 }
 
+// helper function
+std::vector<cv::Mat> calc_textColorHists(Mat img){
+    vector<Mat> hists;
+    // color
+    vector<Mat> img_rgb;
+    split(img, img_rgb);
+    hists.push_back(calc_histogram(img_rgb[0], 1)); // b
+    hists.push_back(calc_histogram(img_rgb[1], 1)); // g
+    hists.push_back(calc_histogram(img_rgb[2], 1)); // r
+    // texture
+    Mat img_gray, img_x, img_y, img_mag;
+    cv::cvtColor( img, img_gray, cv::COLOR_BGR2GRAY );
+    cv::Sobel(img_gray, img_x, CV_32F, 1, 0);
+    cv::Sobel(img_gray, img_y, CV_32F, 0, 1);
+    cv::magnitude(img_x, img_y, img_mag);
+    hists.push_back(calc_histogram(img_mag, 1));
+    return hists;
+}
+
+// Baseline Histogram Matching
+double baseline_hist_metric(const vector<Mat> hist_query, const cv::Mat img) { 
+    return cv::compareHist(hist_query[0], calc_histogram(img, 0), cv::HISTCMP_INTERSECT);
+}
+
+
 // Multiple Histogram Matching
-double multi_hist_metric(const cv::Mat query, const cv::Mat img) { 
+double multi_hist_metric(const vector<Mat> query, const cv::Mat img) { 
     using namespace cv;
 
-    auto query_width = query.cols, query_height = query.rows,
-         img_width = img.cols, img_height = img.rows;
-    Mat query_left(query, Rect(0, 0, query_width/5, query_height)),
-        query_right(query, Rect(query_width*4/5, 0, 
-                query_width/5, query_height)), 
-        query_middle(query, Rect(query_width/5, 0,
-                    query_width*3/5, img_height));
+    auto img_width = img.cols, img_height = img.rows;
 
     Mat img_left(img, Rect(0, 0, img_width/5, img_height)),
         img_right(img, Rect(img_width*4/5, 0, img_width/5, img_height)),
         img_middle(img, Rect(img_width/5, 0, img_width*3/5, img_height));
 
-    auto left_cmp = baseline_hist_metric(query_left, img_left);
-    auto right_cmp = baseline_hist_metric(query_right, img_right);
-    auto middle_cmp = baseline_hist_metric(query_middle, img_middle);
-    auto whole_cmp = baseline_hist_metric(query, img);
+    auto left_cmp = compareHist(query[0], calc_histogram(img_left, 0), HISTCMP_INTERSECT);
+    auto right_cmp = compareHist(query[1], calc_histogram(img_right, 0), HISTCMP_INTERSECT);
+    auto middle_cmp = compareHist(query[2], calc_histogram(img_middle, 0), HISTCMP_INTERSECT);
+    auto whole_cmp = compareHist(query[3], calc_histogram(img, 0), HISTCMP_INTERSECT);
 
     return left_cmp * 0.05 + right_cmp * 0.05 +
            middle_cmp * 0.7 + whole_cmp * 0.2;
 
 }
 
-// helper function for texture_color_metric
-double single_color_hist(const cv::Mat query, const cv::Mat img) { 
-    // Quantize the hue to 30 levels
-    // and the saturation to 32 levels
-    int hbins = 30, sbins = 32;
-    int histSize[] = {hbins, sbins};
-    // hue varies from 0 to 179, see cvtColor
-    float hranges[] = { 0, 180 };
-    // saturation varies from 0 (black-gray-white) to
-    // 255 (pure spectrum color)
-    float sranges[] = { 0, 256 };
-    const float* ranges[] = { hranges, sranges };
-
-    // matrices to store histograms 
-    cv::Mat hist_query, hist_image; 
-
-    // calculate histograms 
-    cv::calcHist(&query, 1, 0, cv::Mat(), hist_query, 1, histSize, ranges, true, false);
-    cv::calcHist(&img, 1, 0, cv::Mat(), hist_image, 1, histSize, ranges, true, false);
-    
-
-    cv::normalize(hist_query, hist_query, 1, query.rows*query.cols, cv::NORM_MINMAX);
-    cv::normalize(hist_image, hist_image, 1, img.rows*img.cols, cv::NORM_MINMAX);
-
-    return cv::compareHist(hist_query, hist_image, cv::HISTCMP_CORREL);
-}
-
 // Integrating Texture and Color
-double texture_color_metric(const cv::Mat query, const cv::Mat img){
+double texture_color_metric(const vector<Mat> query, const cv::Mat img){
+    auto img_hists = calc_textColorHists(img);
     // Color 
-    std::vector<cv::Mat> query_rgb, img_rgb;
-    cv::split(query, query_rgb);
-    cv::split(img, img_rgb);
-
-    auto b_cmp = single_color_hist(query_rgb[0], img_rgb[0]);
-    auto g_cmp = single_color_hist(query_rgb[1], img_rgb[1]);
-    auto r_cmp = single_color_hist(query_rgb[2], img_rgb[2]);
-
+    auto b_cmp = compareHist(query[0], img_hists[0], HISTCMP_CORREL);
+    auto g_cmp = compareHist(query[1], img_hists[1], HISTCMP_CORREL);
+    auto r_cmp = compareHist(query[2], img_hists[1], HISTCMP_CORREL);
 
     // Texture 
-    // Containers
-    cv::Mat query_gray, img_gray, query_x, query_y, img_x, img_y;
-    cv::Mat query_mag, img_mag; 
-
-    // Convert the images to Gray 
-    cv::cvtColor( query, query_gray, cv::COLOR_BGR2GRAY );
-    cv::cvtColor( img, img_gray, cv::COLOR_BGR2GRAY );
-
-    // Apply Sobel filter (x)
-    cv::Sobel(query_gray, query_x, CV_32F, 1, 0);
-    cv::Sobel(img_gray, img_x, CV_32F, 1, 0);
-
-    // Apply Sobel filter (y)
-    cv::Sobel(query_gray, query_y, CV_32F, 0, 1);
-    cv::Sobel(img_gray, img_y, CV_32F, 0, 1);
-
-    // calculate the magnitude of gradient
-    cv::magnitude(query_x, query_y, query_mag);
-    cv::magnitude(img_x, img_y, img_mag);
-
-    auto mag_cmp = single_color_hist(query_mag, img_mag);
+    auto mag_cmp = compareHist(query[3], img_hists[3], HISTCMP_CORREL);
 
     return b_cmp*0.1667 + g_cmp*0.1667 + r_cmp*0.1667 + mag_cmp * 0.5; 
 }
 
 // Custom Distance Metric
-double custom_distance_metric(const cv::Mat query, const cv::Mat img){
+double custom_distance_metric(const vector<Mat> query, const cv::Mat img){
     // whole img single hist
-    double whole_cmp = baseline_hist_metric(query, img);
+    double whole_cmp = compareHist(query[0], calc_histogram(img, 0), cv::HISTCMP_INTERSECT);
 
     // center 100*100 texture & color
-    int query_row_mid = query.rows/2 - 1; // midpoint-1 is the central index
-    int query_col_mid = query.cols/2 - 1;
-
     int img_row_mid = img.rows/2 - 1;
     int img_col_mid = img.cols/2 - 1;
 
-    cv::Mat query_middle(query, cv::Rect(query_col_mid-50, query_row_mid-50,
-                    100, 100));
     cv::Mat img_middle(img, cv::Rect(img_col_mid-50, img_row_mid-50,
                     100, 100));
-
-    double texture_color_cmp = texture_color_metric(query_middle, img_middle);
+    // remove the first element
+    vector<Mat> newq;
+    for(int i = 1; i < query.size(); i++){
+        newq.push_back(query[i]);
+    }
+    double texture_color_cmp = texture_color_metric(newq, img_middle);
 
     return whole_cmp * 0.5 + texture_color_cmp * 0.5;
 }
 
-double other_matching(const Mat query, const Mat img) { 
-    Mat query_gray, img_gray,
-        query_lap, img_lap,
-        query_lap_abs, img_lap_abs; 
+Mat other_matching_helper(Mat img){
+    Mat img_gray,
+        img_lap,
+        img_lap_abs; 
 
-    GaussianBlur(query, query, Size(3, 3), 0);
     GaussianBlur(img, img, Size(3, 3), 0);
-
-
-    cvtColor(query, query_gray, COLOR_BGR2GRAY);
     cvtColor(img, img_gray, COLOR_BGR2GRAY);
-
-    Laplacian(query_gray, query_lap, CV_16S);
     Laplacian(img_gray, img_lap, CV_16S);
-
-    convertScaleAbs(query_lap, query_lap_abs);
     convertScaleAbs(img_lap, img_lap_abs);
 
-    return single_color_hist(query_lap_abs, img_lap_abs);
+    return calc_histogram(img_lap_abs, 1);
+}
+
+double other_matching(const vector<Mat> query, const Mat img) { 
+    Mat query_lap_abs, img_lap_abs; 
+
+    query_lap_abs = query[0];
+    img_lap_abs = other_matching_helper(img);
+
+    return compareHist(query_lap_abs, img_lap_abs, cv::HISTCMP_CORREL);
 }
