@@ -15,14 +15,14 @@ using namespace cv;
 
 
 std::vector<Moments>
-compute_mulitiple_moments(const Mat &src){
+compute_mulitiple_moments(const Mat &src) {
 	Mat src_gray;
 	int thresh = 100;
 	int max_thresh = 255;
 	RNG rng(12345);
 
 	/// Convert image to gray and blur it
-	cvtColor( src, src_gray, CV_BGR2GRAY );
+	cvtColor( src, src_gray, COLOR_BGR2GRAY );
 	blur( src_gray, src_gray, Size(3,3) );
 
 	Mat canny_output;
@@ -32,26 +32,26 @@ compute_mulitiple_moments(const Mat &src){
 	/// Detect edges using canny
 	Canny( src_gray, canny_output, thresh, thresh*2, 3 );
 	/// Find contours
-	findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	findContours( canny_output, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
 	/// Get the moments
 	std::vector<Moments> mu(contours.size() );
-	for( int i = 0; i < contours.size(); i++ )
-		{ mu[i] = moments( contours[i], false ); }
+	for (int i = 0; i < contours.size(); i++)
+	    mu[i] = moments( contours[i], false ); 
 
 	return mu;
 }
 
-void compute_multiple_HuMoments(const Mat &src, std::vector<double *> huMoments){
+void compute_multiple_HuMoments(const Mat &src, std::vector<double *> huMoments) {
 	std::vector<Moments> moments = compute_mulitiple_moments(src);
-	for( int i = 0; i < moments.size(); i++ )
-		{ HuMoments(moments[i], huMoments[i]); }
+	for (int i = 0; i < moments.size(); i++)
+	    HuMoments(moments[i], huMoments[i]); 
 }
 
-void compute_single_HuMoments(const Mat &src, double *hu){
+void compute_single_HuMoments(const Mat &src, double *hu) {
 	Mat src_gray, src_thresh;
 	// convert to grayscale
-	cvtColor( src, src_gray, CV_BGR2GRAY );
+	cvtColor( src, src_gray, COLOR_BGR2GRAY );
 	// threshold image
 	threshold( src_gray, src_thresh, 128, 255, THRESH_BINARY);
 	// calculate moments
@@ -64,9 +64,9 @@ void compute_single_HuMoments(const Mat &src, double *hu){
 	}
 }
 
-double compute_entropy(const Mat &src){
+double compute_entropy(const Mat &src) {
 	Mat src_gray;
-	if(src.channels()==3) cvtColor(src, src_gray, CV_BGR2GRAY);
+	if(src.channels()==3) cvtColor(src, src_gray, COLOR_BGR2GRAY);
 	// establish the number of bins
 	int histSize = 256;
 	// set the ranges (for B,G,R)
@@ -87,7 +87,7 @@ double compute_entropy(const Mat &src){
 	return entropy;
 }
 
-void compute_features(const Mat &src, double *f){
+void compute_features(const Mat &src, double *f) {
 	/// for single object (for now)
 	// compute hu
 	double hu[7];
