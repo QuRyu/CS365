@@ -66,37 +66,56 @@ vector<Features> process_multiple_images(const vector<Mat> &images) {
 }
 
 int main(int argc, char *argv[]) {
+    /* Argument Format: source (path)
+     * source: 0 for camera and 1 for directories 
+     * path: if we use the directories, provide the path 
+     */
+
     bool camera;
     string img_fp; 
+    fstream db_stream(DB_path());
 
+    if (argc < 1) {
+	cerr << "no argument provided" << endl;
+	exit(-1);
+    } else {
+	int source = atoi(argv[1]);
+	camera = source == 0 ? true : false; 
 
-    //switch(argc) {  
-	//case 2: // use the camera
-	    //camera = true; 
-	    //break;
-	//case 3: // takes a set of images 
-	    //camera = false; 
-	    //img_fp = argv[2];
-	    //break;
-	//default:
-	    //cerr << "unsupported number of parameters" << endl;
-	    //exit(-1);
-    //}
-
+	if (!camera) 
+	    img_fp = argv[2];
+    }
 
     // assuming we are using a list of images 
-    camera = false;
-    img_fp = argv[2];
-    int num_images_to_show = 10;
+    
+    if (!camera) { // we are using a list of directories 
+	auto images_fp = traverse_dir(img_fp);
+	vector<Mat> images(images_fp.size());
 
-    auto images_fp = traverse_dir(img_fp);
+	for (auto img_fp : images_fp) {
+	    auto img = imread(img_fp); 
+	    images.push_back(img);
+	}
 
-    printf("%s\n", images_fp[5].c_str());
-    process_one_image(images_fp[5]);
+	auto features = process_multiple_images(images);
 
+	for (auto f : features) {
+	    f.write_to_fstream(db_stream);
+	}
 
+	while (true) {
+	    cout << "the path of photo to compare: " << endl; 
 
-    if (camera) {
+	    string cmp_path; 
+	    cin >> cmp_path; 
+
+	    auto img = imread(cmp_path);
+	    auto cmp_feature = process_one_image(img);
+
+	    // use classifier to find which image 
+	}
+
+    } else if (camera) {
         cv::VideoCapture *capdev;
         char label[256];
         int quit = 0;
@@ -146,10 +165,13 @@ int main(int argc, char *argv[]) {
               cv::imwrite(buffer, frame, pars);
               printf("Image written: %s\n", buffer);
               break;
-   
-	    default: break;
-	   }
-   
+
+	    case 'N': // store the new image into the database 
+	      auto feature = process_one_image(frame);
+	      feature.write_to_fstream(db_stream);
+	      break;
+
+	  }
    
    
 	// terminate the video capture
@@ -160,4 +182,5 @@ int main(int argc, char *argv[]) {
 
 	return(0);
 
-    }}
+    }
+}
