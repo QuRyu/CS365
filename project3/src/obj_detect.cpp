@@ -152,6 +152,8 @@ void process_one_image(const string &img_fp) {
 
     cout << "alpha " << alpha << ", moment " << moment << endl;
 
+    cout << "size of regmap(label) " << label << endl;
+
     double f[9];
     compute_features(img, f);
 
