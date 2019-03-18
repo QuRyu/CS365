@@ -38,7 +38,7 @@ std::vector<std::vector<Point>> compute_contours(const Mat &src){
 	/// Detect edges using canny
 	Canny( src_gray, canny_output, thresh, thresh*2, 3 );
 	/// Find contours
-	findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	findContours( canny_output, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE, Point(0, 0) );
 	return contours;
 }
 
@@ -123,7 +123,7 @@ std::vector<double> compute_multiple_entropy(const Mat &src){
 
         // Create a mask for each contour to mask out that region from image.
         Mat mask = Mat::zeros(src.size(), CV_8UC1);
-        drawContours(mask, contours, i, Scalar(255), CV_FILLED);
+        drawContours(mask, contours, i, Scalar(255), FILLED);
 
         // At this point, mask has value of 255 for pixels within the contour and value of 0 for those not in contour.
 

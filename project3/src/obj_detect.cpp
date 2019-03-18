@@ -47,14 +47,6 @@ Features process_one_image(const Mat &img) {
     // process the image for segmentation  
     auto processed = process_img(img);
 
-    // segment the image 
-    // Mat regmap, stats, centroids; 
-    // int label = cv::connectedComponentsWithStats(processed, regmap, 
-	   //                                       stats, centroids, 8, CV_32S);
-
-    // cout << "size of regmap(label) " << label << endl;
-
-    Features features;
     double f[9];
     compute_features(img, f);
 
