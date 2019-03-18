@@ -13,7 +13,7 @@ endif
 
 ifeq ($(OSNAME), Linux) 
     CC = g++
-    CFLAGS = -I../include -DLinux_Iris
+    CFLAGS = -I../include -Dlinux_Iris
     LDFLAGS = -L/usr/lib/x86_64-linux-gnu 
 
 endif 
