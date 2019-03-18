@@ -9,9 +9,17 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
+
 #include "HOG.hpp"
+#include "features.hpp"
 
 using namespace cv;
+using namespace std;
+
+void Features::write_to_fstream(fstream &stream) {
+    stream << " " << endl;
+}
+
 
 
 std::vector<Moments>
@@ -111,3 +119,4 @@ void compute_features(const Mat &src, double *f) {
 	// cout << "Weighted HOG feature: " << wHogFeature << endl;
 
 }
+
