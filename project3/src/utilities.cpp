@@ -73,3 +73,8 @@ traverse_dir(const std::string &dir_fp) {
 
     return images_fp;
 }
+
+inline 
+bool file_exists(const std::fstream &stream) {
+    return stream.good();
+}

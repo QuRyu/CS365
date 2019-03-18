@@ -10,11 +10,15 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/objdetect.hpp>
-#include "HOG.hpp"
 #include "imgproc.hpp"
-#include <typeinfo>
+#include "features.hpp"
 
 using namespace cv;
+using namespace std;
+
+void Features::write_to_fstream(fstream &stream) {
+    stream << " " << endl;
+}
 
 std::vector<std::vector<Point>> compute_contours(const Mat &src){
 	Mat src_gray;
@@ -26,7 +30,7 @@ std::vector<std::vector<Point>> compute_contours(const Mat &src){
 	std::vector<Vec4i> hierarchy;
 
 	/// Convert image to gray and blur it
-	cvtColor( src, src_gray, CV_BGR2GRAY );
+	cvtColor( src, src_gray, COLOR_BGR2GRAY );
 	blur( src_gray, src_gray, Size(3,3) );
 
 	Mat canny_output;
@@ -46,8 +50,8 @@ compute_mulitiple_moments(const Mat &src){
 
 	/// Get the moments
 	std::vector<Moments> mu(contours.size() );
-	for( int i = 0; i < contours.size(); i++ )
-		{ mu[i] = moments( contours[i], false ); }
+	for (int i = 0; i < contours.size(); i++)
+	    mu[i] = moments( contours[i], false ); 
 
 	return mu;
 }
@@ -68,10 +72,10 @@ std::vector<double *> compute_multiple_HuMoments(const Mat &src){
 	return huMoments;
 }
 
-void compute_single_HuMoments(const Mat &src, double *hu){
+void compute_single_HuMoments(const Mat &src, double *hu) {
 	Mat src_gray, src_thresh;
 	// convert to grayscale
-	cvtColor( src, src_gray, CV_BGR2GRAY );
+	cvtColor( src, src_gray, COLOR_BGR2GRAY );
 	// threshold image
 	threshold( src_gray, src_thresh, 128, 255, THRESH_BINARY);
 	// calculate moments
@@ -84,9 +88,9 @@ void compute_single_HuMoments(const Mat &src, double *hu){
 	}
 }
 
-double compute_entropy(const Mat &src){
+double compute_entropy(const Mat &src) {
 	Mat src_gray;
-	if(src.channels()==3) cvtColor(src, src_gray, CV_BGR2GRAY);
+	if(src.channels()==3) cvtColor(src, src_gray, COLOR_BGR2GRAY);
 	// establish the number of bins
 	int histSize = 256;
 	// set the ranges (for B,G,R)
@@ -222,3 +226,4 @@ void compute_features(const Mat &src, double *f){
 
 
 }
+
