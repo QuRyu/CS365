@@ -171,6 +171,8 @@ std::vector<double> compute_percentArea(const Mat &src){
 
 void compute_features(const Mat &src, double *f){
 
+	cout << "here" << endl;
+
 	// compute huMoments
 	std::vector<double *> hu;
 	hu = compute_multiple_HuMoments(src);

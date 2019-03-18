@@ -28,7 +28,7 @@ std::string DB_path() {
 
 #ifdef linux_Iris
     // fill the path 
-    return "";
+    return "/personal/ylian/CS365/CS365/project3/data/db.txt";
 #endif 
 }
 
@@ -48,17 +48,13 @@ Features process_one_image(const Mat &img) {
     auto processed = process_img(img);
 
     // segment the image 
-    Mat regmap, stats, centroids; 
-    int label = cv::connectedComponentsWithStats(processed, regmap, 
-	                                         stats, centroids, 8, CV_32S);
+    // Mat regmap, stats, centroids; 
+    // int label = cv::connectedComponentsWithStats(processed, regmap, 
+	   //                                       stats, centroids, 8, CV_32S);
 
-    auto alpha = orientation_alpha<unsigned char>(regmap, regmap, stats, centroids, 1);
-    auto moment = orientedCentralMoments<unsigned char>(processed, regmap, stats, centroids, alpha, 1);
+    // cout << "size of regmap(label) " << label << endl;
 
-    cout << "alpha " << alpha << ", moment " << moment << endl;
-
-    cout << "size of regmap(label) " << label << endl;
-
+    Features features;
     double f[9];
     compute_features(img, f);
 

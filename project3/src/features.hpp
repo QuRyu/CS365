@@ -19,7 +19,7 @@ double compute_entropy(const cv::Mat &src);
 
 std::vector<double> compute_HWRatios(const cv::Mat &src);
 
-std::vector<double> compute_percentArea(const cv::Mat &src)
+std::vector<double> compute_percentArea(const cv::Mat &src);
 
 void compute_features(const cv::Mat &src, double *f);
 
