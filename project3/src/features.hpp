@@ -46,6 +46,11 @@ struct Features {
 	return feature[pos];
     }
 
+    inline 
+    double operator[](std::size_t pos) const { 
+	return feature[pos];
+    }
+
     void write_to_fstream(std::fstream &stream);
 };
 
