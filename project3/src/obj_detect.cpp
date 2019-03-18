@@ -28,7 +28,7 @@ std::string DB_path() {
 
 #ifdef linux_Iris
     // fill the path 
-    return "";
+    return "/personal/ylian/CS365/CS365/project3/data/db.txt";
 #endif 
 }
 
