@@ -47,6 +47,18 @@ Features process_one_image(const Mat &img) {
     // process the image for segmentation  
     auto processed = process_img(img);
 
+    // segment the image 
+    Mat regmap, stats, centroids; 
+    int label = cv::connectedComponentsWithStats(processed, regmap, 
+	                                         stats, centroids, 8, CV_32S);
+
+    auto alpha = orientation_alpha<unsigned char>(regmap, regmap, stats, centroids, 1);
+    auto moment = orientedCentralMoments<unsigned char>(processed, regmap, stats, centroids, alpha, 1);
+
+    cout << "alpha " << alpha << ", moment " << moment << endl;
+
+    cout << "size of regmap(label) " << label << endl;
+
     double f[9];
     compute_features(img, f);
 
