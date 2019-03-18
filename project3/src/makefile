@@ -7,14 +7,15 @@ OSNAME = $(shell uname)
 
 ifeq ($(OSNAME), Darwin) 
     CC = clang++
-    CFLAGS = -I/usr/local/include/opencv4 -I../include -std=c++17 
-    LDFLAGS = -L/usr/local/lib
+    CFLAGS = -I/usr/local/include/opencv4 -I../include -std=c++17 -DmacOS_Qingbo
+    LDFLAGS = -L/usr/local/lib 
 endif 
 
 ifeq ($(OSNAME), Linux) 
     CC = g++
-    CFLAGS = -I../include 
-    LDFLAGS = -L/usr/lib/x86_64-linux-gnu
+    CFLAGS = -I../include -DLinux_Iris
+    LDFLAGS = -L/usr/lib/x86_64-linux-gnu 
+
 endif 
 	
 
