@@ -63,15 +63,15 @@ Features process_one_image(const Mat &img, const string &label) {
     // process the image for segmentation  
     auto processed = process_img(img);
 
-    double f[9];
-    compute_features(img, f);
+    Features f;
+    f = compute_features(img);
 
     auto label_ex = extract_label(label);
 
-    // wrap all features in the Feature struct  
+    // wrap all features in the Feature struct 
+    f.label = label_ex; 
 
-    // add the label to the feature 
-    return Features();
+    return f;
 }
 
 
@@ -81,7 +81,7 @@ vector<Features> process_multiple_images(const vector<Mat> &images,
     vector<Features> features;
 
     for (int i=0; i<images.size(); i++) {
-	features.push_back(process_one_image(images[i], labels[i]));
+	   features.push_back(process_one_image(images[i], labels[i]));
     }
 
     return features;
@@ -104,47 +104,44 @@ int main(int argc, char *argv[]) {
 	int source = atoi(argv[1]);
 	camera = source == 0 ? true : false; 
 
-	if (!camera) 
-	    img_fp = argv[2];
-    }
-
     // assuming we are using a list of images 
     
     if (!camera) { // we are using a list of directories 
-	auto images_fp = traverse_dir(img_fp);
-	vector<Mat> images;
+        img_fp = argv[2];
+    	auto images_fp = traverse_dir(img_fp);
+    	vector<Mat> images;
+	
+    	for (auto img_fp : images_fp) {
+    	    auto img = imread(img_fp); 
+    	    images.push_back(img);
+    	}
+        auto features = process_multiple_images(images, images_fp);
 
-	for (auto img_fp : images_fp) {
-	    auto img = imread(img_fp); 
-	    images.push_back(img);
-	}
+    	// for (auto f : features) {
+    	//     f.write_to_fstream(db_stream);
+    	// }
 
-	auto features = process_multiple_images(images, images_fp);
+    	while (true) {
+    	    cout << "the path of photo to compare: " << endl; 
 
-	for (auto f : features) {
-	    f.write_to_fstream(db_stream);
-	}
-
-	while (true) {
-	    cout << "the path of photo to compare: " << endl; 
-
-	    string cmp_path; 
-	    cin >> cmp_path; 
+    	    string cmp_path; 
+    	    cin >> cmp_path; 
 
 	    auto img = imread(cmp_path);
 	    auto cmp_feature = process_one_image(img, cmp_path); 
 
-	    // use classifier to find which image 
-	}
+    	    // use classifier to find which image 
+    	}
 
-    } else if (camera) {
+    }
+    else if (camera) {
         cv::VideoCapture *capdev;
         char label[256];
         int quit = 0;
         int frameid = 0;
         char buffer[256];
         std::vector<int> pars;
-	bool training_mode = true; 
+	    bool training_mode = true; 
 
 	vector<Mat> images; // the set of images used as a training set 
 	                    // captured from the camera 
@@ -171,57 +168,59 @@ int main(int argc, char *argv[]) {
         cv::Mat frame;
         
         
-	for(;!quit;) {
-	    *capdev >> frame; // get a new frame from the camera, treat as a stream
-        
-	    if( frame.empty() ) {
-		printf("frame is empty\n");
-		break;
+    	for(;!quit;) {
+    	    *capdev >> frame; // get a new frame from the camera, treat as a stream
+            
+    	    if( frame.empty() ) {
+    		  printf("frame is empty\n");
+    		  break;
             }
-          
-          cv::imshow("Video", frame);
-        
-          int key = cv::waitKey(10);
-        
-          switch(key) {
-	    case 'q':
-              quit = 1;
-              break;
               
-	    //case 'c': // capture a photo if the user hits c
-              //sprintf(buffer, "%s.%03d.png", label, frameid++);
-              //cv::imwrite(buffer, frame, pars);
-              //printf("Image written: %s\n", buffer);
-              //break;
+            cv::imshow("Video", frame);
+            
+            int key = cv::waitKey(10);
+            
+            switch(key) {
+        	    case 'q':
+                   quit = 1;
+                   break;
+                      
+        	    case 'c': // capture a photo if the user hits c
+                   sprintf(buffer, "%s.%03d.png", label, frameid++);
+                   cv::imwrite(buffer, frame, pars);
+                   printf("Image written: %s\n", buffer);
+                   break;
 
-	    case 'N': // store the new image into the database 
-	      if (training_mode) { // capture the image only in training mode 
-		  // get the image label 
-		  string label;
-		  cout << "label for the image" << endl; 
-		  cin >> label;
-		  cout << endl; 
+                case 'N': // store the new image into the database 
+          if (training_mode) { // capture the image only in training mode 
+          // get the image label 
+          string label;
+          cout << "label for the image" << endl; 
+          cin >> label;
+          cout << endl; 
 
-		  // store the image label 
-	          images.push_back(frame);
-	          auto feature = process_one_image(frame, label);
-	          features.push_back(feature);
-	          //feature.write_to_fstream(db_stream);
-	      }
-	      break;
+          // store the image label 
+              images.push_back(frame);
+              auto feature = process_one_image(frame, label);
+              features.push_back(feature);
+              //feature.write_to_fstream(db_stream);
+          }
+          break;
 
-	    case 'x': 
-	      training_mode = false; 
-	  }
-   
-   
-	// terminate the video capture
-	printf("Terminating\n");
-	delete capdev;
+        case 'x': 
+          training_mode = false;
+          break;
+    	    }
+       
+       
+        	// terminate the video capture
+        	printf("Terminating\n");
+        	delete capdev;
 
-    }
+        }
 
-	return(0);
+    	return(0);
 
+        }
     }
 }

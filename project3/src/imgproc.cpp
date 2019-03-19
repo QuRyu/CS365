@@ -16,7 +16,7 @@ Mat threshold(const Mat &src) {
 
 
     cv::cvtColor(src, grayscale, COLOR_BGR2GRAY);
-    cv::threshold(grayscale, dst, 120, 255, THRESH_BINARY);
+    cv::threshold(grayscale, dst, 100, 255, THRESH_BINARY);
 
     return dst;
 }
