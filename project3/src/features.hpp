@@ -28,6 +28,7 @@ struct Features {
     double centroid_x; 
     double centroid_y; 
     double orientation; 
+    std::string label;
 
     Features() { }
 
