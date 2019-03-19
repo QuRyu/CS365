@@ -8,6 +8,7 @@
 #include <string>
 #include <cstdio>
 #include <cmath>
+#include <regex>
 
 #include <opencv2/opencv.hpp>
 
@@ -44,23 +45,43 @@ Mat process_img(const Mat &src) {
     return morph_closed;
 }
 
-Features process_one_image(const Mat &img) {
+
+// extra the label name given a string name 
+string extract_label(const string &str) {
+    regex label_regex("(\\w+)\\.\\d*\\.\\w*$");
+    if (regex_search(str, label_regex)) {
+	auto label_begin = sregex_iterator(str.begin(), str.end(), label_regex);
+	smatch match = *label_begin;
+	return match[1].str();
+    } else 
+	return str;
+
+
+}
+
+Features process_one_image(const Mat &img, const string &label) {
     // process the image for segmentation  
     auto processed = process_img(img);
 
     double f[9];
     compute_features(img, f);
 
+    auto label_ex = extract_label(label);
+
     // wrap all features in the Feature struct  
 
+    // add the label to the feature 
     return Features();
 }
 
-vector<Features> process_multiple_images(const vector<Mat> &images) {
+
+vector<Features> process_multiple_images(const vector<Mat> &images, 
+	                                 const vector<string> &labels) {
+    assert(images.size() == labels.size());
     vector<Features> features;
 
-    for (auto img : images) {
-	features.push_back(process_one_image(img));
+    for (int i=0; i<images.size(); i++) {
+	features.push_back(process_one_image(images[i], labels[i]));
     }
 
     return features;
@@ -98,8 +119,7 @@ int main(int argc, char *argv[]) {
 	    images.push_back(img);
 	}
 
-
-	auto features = process_multiple_images(images);
+	auto features = process_multiple_images(images, images_fp);
 
 	for (auto f : features) {
 	    f.write_to_fstream(db_stream);
@@ -112,7 +132,7 @@ int main(int argc, char *argv[]) {
 	    cin >> cmp_path; 
 
 	    auto img = imread(cmp_path);
-	    auto cmp_feature = process_one_image(img);
+	    auto cmp_feature = process_one_image(img, cmp_path); 
 
 	    // use classifier to find which image 
 	}
@@ -124,6 +144,12 @@ int main(int argc, char *argv[]) {
         int frameid = 0;
         char buffer[256];
         std::vector<int> pars;
+	bool training_mode = true; 
+
+	vector<Mat> images; // the set of images used as a training set 
+	                    // captured from the camera 
+	vector<Features> features; // the corresponding features for each image
+
         
         pars.push_back(5);
         
@@ -162,17 +188,30 @@ int main(int argc, char *argv[]) {
               quit = 1;
               break;
               
-	    case 'c': // capture a photo if the user hits c
-              sprintf(buffer, "%s.%03d.png", label, frameid++);
-              cv::imwrite(buffer, frame, pars);
-              printf("Image written: %s\n", buffer);
-              break;
+	    //case 'c': // capture a photo if the user hits c
+              //sprintf(buffer, "%s.%03d.png", label, frameid++);
+              //cv::imwrite(buffer, frame, pars);
+              //printf("Image written: %s\n", buffer);
+              //break;
 
 	    case 'N': // store the new image into the database 
-	      auto feature = process_one_image(frame);
-	      feature.write_to_fstream(db_stream);
+	      if (training_mode) { // capture the image only in training mode 
+		  // get the image label 
+		  string label;
+		  cout << "label for the image" << endl; 
+		  cin >> label;
+		  cout << endl; 
+
+		  // store the image label 
+	          images.push_back(frame);
+	          auto feature = process_one_image(frame, label);
+	          features.push_back(feature);
+	          //feature.write_to_fstream(db_stream);
+	      }
 	      break;
 
+	    case 'x': 
+	      training_mode = false; 
 	  }
    
    
