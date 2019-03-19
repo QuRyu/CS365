@@ -34,6 +34,7 @@ std::string DB_path() {
 
 Mat process_img(const Mat &src) {
     // threshold 
+
     auto thresholded = threshold(src);
  
     // morphological processing 
@@ -56,7 +57,7 @@ Features process_one_image(const Mat &img) {
 }
 
 vector<Features> process_multiple_images(const vector<Mat> &images) {
-    vector<Features> features(images.size()); 
+    vector<Features> features;
 
     for (auto img : images) {
 	features.push_back(process_one_image(img));
@@ -90,12 +91,13 @@ int main(int argc, char *argv[]) {
     
     if (!camera) { // we are using a list of directories 
 	auto images_fp = traverse_dir(img_fp);
-	vector<Mat> images(images_fp.size());
+	vector<Mat> images;
 
 	for (auto img_fp : images_fp) {
 	    auto img = imread(img_fp); 
 	    images.push_back(img);
 	}
+
 
 	auto features = process_multiple_images(images);
 
