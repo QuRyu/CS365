@@ -22,7 +22,7 @@ endif
 CXXFLAGS = $(CFLAGS)
 CXX = $(CC)
 
-LDLIBS = -lopencv_core -lopencv_highgui -lopencv_video -lopencv_videoio -lopencv_imgproc -lopencv_imgcodecs -lopencv_objdetect
+LDLIBS = -lopencv_core -lopencv_highgui -lopencv_video -lopencv_videoio -lopencv_imgproc -lopencv_imgcodecs -lopencv_objdetect -lopencv_ml
 		 
 
 
