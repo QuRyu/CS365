@@ -3,6 +3,8 @@
 
     Qigbo Liu, Iris Lian
 
+    obj_detect.cpp
+
 */
 
 #include <string>
@@ -127,8 +129,9 @@ int main(int argc, char *argv[]) {
     	    string cmp_path; 
     	    cin >> cmp_path; 
 
-	    auto img = imread(cmp_path);
-	    auto cmp_feature = process_one_image(img, cmp_path); 
+    	    auto img = imread(cmp_path); // path needs to be complete
+            cout << img.size() << endl;
+    	    auto cmp_feature = process_one_image(img, cmp_path); 
 
     	    // use classifier to find which image 
     	}
@@ -143,9 +146,9 @@ int main(int argc, char *argv[]) {
         std::vector<int> pars;
 	    bool training_mode = true; 
 
-	vector<Mat> images; // the set of images used as a training set 
-	                    // captured from the camera 
-	vector<Features> features; // the corresponding features for each image
+    	vector<Mat> images; // the set of images used as a training set 
+    	                    // captured from the camera 
+    	vector<Features> features; // the corresponding features for each image
 
         
         pars.push_back(5);
@@ -192,24 +195,24 @@ int main(int argc, char *argv[]) {
                    break;
 
                 case 'N': // store the new image into the database 
-          if (training_mode) { // capture the image only in training mode 
-          // get the image label 
-          string label;
-          cout << "label for the image" << endl; 
-          cin >> label;
-          cout << endl; 
+                  if (training_mode) { // capture the image only in training mode 
+                  // get the image label 
+                  string label;
+                  cout << "label for the image" << endl; 
+                  cin >> label;
+                  cout << endl; 
 
-          // store the image label 
-              images.push_back(frame);
-              auto feature = process_one_image(frame, label);
-              features.push_back(feature);
-              //feature.write_to_fstream(db_stream);
-          }
-          break;
+                  // store the image label 
+                      images.push_back(frame);
+                      auto feature = process_one_image(frame, label);
+                      features.push_back(feature);
+                      //feature.write_to_fstream(db_stream);
+                  }
+                  break;
 
-        case 'x': 
-          training_mode = false;
-          break;
+                case 'x': 
+                  training_mode = false;
+                  break;
     	    }
        
        

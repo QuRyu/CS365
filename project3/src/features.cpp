@@ -20,6 +20,7 @@ void Features::write_to_fstream(fstream &stream) {
     stream << " " << endl;
 }
 
+/* compute the contours of the input Mat and return the biggest contour*/
 vector<vector<Point>> compute_contours(const Mat &src){
 	Mat src_gray;
 	int thresh = 100;
@@ -58,6 +59,7 @@ vector<vector<Point>> compute_contours(const Mat &src){
 	return obj_contour;
 }
 
+/* compute multiple moments of the input Mat*/
 vector<Moments>
 compute_multiple_moments(const Mat &src){
 	// Get the contours
@@ -72,6 +74,7 @@ compute_multiple_moments(const Mat &src){
 	return mu;
 }
 
+/* compute multiple HuMoments */
 vector<double *> compute_multiple_HuMoments(const Mat &src){
 	vector<Moments> moments = compute_multiple_moments(src);
 
@@ -174,6 +177,7 @@ vector<double> compute_percentArea(vector<vector<Point>> contours){
 	return percent;
 }
 
+/* compute the centroids and oritentations */
 vector<double> compute_centriods_ort(const Mat &src){
 	vector<double> res;
 
