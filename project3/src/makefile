@@ -29,7 +29,7 @@ LDLIBS = -lopencv_core -lopencv_highgui -lopencv_video -lopencv_videoio -lopencv
 
 BINDIR = ../bin
 
-obd: obj_detect.o utilities.o imgproc.o features.o HOG.o classifier.o
+obd: obj_detect.o utilities.o imgproc.o features.o classifier.o
 	$(CC) $^ -o $(BINDIR)/$@ $(LDFLAGS) $(LDLIBS) 
 
 
