@@ -25,6 +25,8 @@ ostream& operator<<(ostream& os, const Features &f) {
     for (auto v : f.feature) 
 	os << v << ", "; 
     os << endl << endl;
+
+    return os;
 }
 
 
