@@ -127,27 +127,31 @@ int main(int argc, char *argv[]) {
     	while (true) {
     	    cout << "the path of photo to compare: " << endl; 
 
-    	    string cmp_path; 
-    	    cin >> cmp_path; 
+                //string cmp_path; 
+		//cin >> cmp_path; 
+	    // use fixed path for now 
+	    string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/donut.000.png");
+	    cout << "cmp_path " << cmp_path << endl;
 
     	    auto img = imread(cmp_path); // path needs to be complete
-            cout << img.size() << endl;
     	    auto cmp_feature = process_one_image(img, cmp_path); 
 
     	    // use classifier to find which image 
-	    auto [_, dist, f] = euclidean(features, cmp_feature);
-	    cout << f << endl;
-    	}
+	    //auto [_, dist, f] = euclidean(features, cmp_feature);
+	    // TODO: find the value K from the list of directories we read 
+	    auto [_, label] = k_means(features, cmp_feature, 8);
+	    cout << label << endl;
 
-    }
-    else if (camera) {
+	    waitKey(0);
+    	}
+    } else if (camera) {
         cv::VideoCapture *capdev;
         char label[256];
         int quit = 0;
         int frameid = 0;
         char buffer[256];
         std::vector<int> pars;
-	    bool training_mode = true; 
+	bool training_mode = true; 
 
     	vector<Mat> images; // the set of images used as a training set 
     	                    // captured from the camera 

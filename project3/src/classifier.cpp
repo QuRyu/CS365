@@ -8,6 +8,12 @@
 
 #include <tuple> 
 
+#include <opencv2/ml.hpp>
+#include <opencv2/dnn.hpp>
+
+#include "utilities.hpp"
+
+
 using namespace std; 
 using namespace cv;
 
@@ -93,29 +99,54 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
  * 2. Features: the feature in database that is closet to the one we are
  * matching 
  */
-tuple<bool, Features> k_means(
+tuple<bool, string> k_means(
 	const std::vector<Features> &db, const Features &cmp, int K) {
+    // convert the set of labels into numbers 
+    map<string, int> label_converter; 
+    int index = 0; 
+    for (auto f : db) {
+	if (label_converter.find(f.label) == label_converter.end()) {
+	    label_converter[f.label] = index++;
+	}
+    }
+    
     // prepare the data for the algorithms 
-    Mat data(db.size() + 1, cmp.num_of_features(), CV_64FC1); 
+    Mat data(db.size(), cmp.num_of_features(), CV_32F),
+	response(db.size(), 1, CV_32S),
+        sample(1, cmp.num_of_features(), CV_32F);
     int N = db.size();
     int n = cmp.num_of_features();
 
+    // move data to the train model 
     for (int i=0; i<N; i++) {
 	const auto &f = db[i];
 	for (int j=0; j<n; j++) {
-	    data.at<double>(i, j) = f[j];
+	    data.at<float>(i, j) = f[j];
 	}
     }
 
-    // run the algorithm to classify data 
-    Mat labels, centers; 
-    TermCriteria criteria(TermCriteria::COUNT+TermCriteria::EPS, 50, 1);
-    auto flag = KMEANS_RANDOM_CENTERS;
-    auto compactness = kmeans(data, K, labels, criteria, 10, flag, centers);
+    for (int i=0; i<n; i++) 
+	sample.at<float>(0, i) = cmp[i];
 
-    // find which cluster cmp falls into 
-    cout << "label matrix size " << labels.size() << endl; 
-    cout << "centers matrix size " << centers.size() << endl; 
+    for (int i=0; i<index; i++) 
+	response.at<int>(i, 0) = label_converter[db[i].label]; 
+
+    // run the algorithm to classify data 
+    Mat results;
+    auto kn = cv::ml::KNearest::create();
+    kn->train(data, cv::ml::ROW_SAMPLE, response);
+    kn->findNearest(sample, K, results); 
+    cout << "KNN result " << results.at<float>(0, 0) << endl;
+    cout << "results type " << type2str(results.type()) << ", results size " << results.size() << endl;
+    
+    // now find the label the response corresponds to 
+    auto findResult = std::find_if( begin(label_converter), 
+	    end(label_converter), [&](const pair<string, int> &elem) {
+	    return elem.second == static_cast<int>(results.at<float>(0));
+    });
+
+
+    return make_tuple(true, findResult->first);
 
 }
 
