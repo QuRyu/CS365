@@ -18,14 +18,15 @@ vector<double> standard_deviation(const vector<Features> &data) {
     int N = data.size();
     int n = data[0].num_of_features();
 
-    vector<double> means;
-    vector<double> stdev;
+    vector<double> means(n, 0);
+    vector<double> stdev(n, 0);
 
     // first calculate the mean of each set of features 
     for (int i=0; i<n; i++) {
 	double sum = 0; 
-	for (int j=0; j<N; j++) 
-	    sum += data[j][i];
+	for (int j=0; j<N; j++) {
+	    sum += (data[j])[i];
+	}
 
 	means[i] = sum / N;
     }
