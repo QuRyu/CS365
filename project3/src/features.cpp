@@ -16,9 +16,17 @@
 using namespace cv;
 using namespace std;
 
-void Features::write_to_fstream(fstream &stream) {
-    stream << " " << endl;
+ostream& operator<<(ostream& os, const Features &f) { 
+    os << "Feature label " << f.label << endl; 
+    os << "centroid_x: " << f.centroid_x << ", centroid_y " << f.centroid_y 
+	<< ", orientation " << f.orientation << endl;
+
+    os << "features: "; 
+    for (auto v : f.feature) 
+	os << v << ", "; 
+    os << endl << endl;
 }
+
 
 vector<vector<Point>> compute_contours(const Mat &src){
 	Mat src_gray;

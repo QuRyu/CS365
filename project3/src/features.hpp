@@ -37,8 +37,9 @@ struct Features {
 	return feature[pos];
     }
 
-    void write_to_fstream(std::fstream &stream);
 };
+
+std::ostream& operator<<(std::ostream& os, const Features &f);
 
 std::vector<std::vector<cv::Point>> compute_contours(const cv::Mat &src);
 
