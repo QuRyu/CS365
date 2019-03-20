@@ -15,6 +15,7 @@
 #include "imgproc.hpp"
 #include "utilities.hpp"
 #include "features.hpp"
+#include "classifier.hpp"
 
 using namespace std;
 using namespace cv;
@@ -128,9 +129,12 @@ int main(int argc, char *argv[]) {
     	    cin >> cmp_path; 
 
 	    auto img = imread(cmp_path);
+		
 	    auto cmp_feature = process_one_image(img, cmp_path); 
 
     	    // use classifier to find which image 
+	    auto [_, dist, f] = euclidean(features, cmp_feature);
+	    cout << f << endl;
     	}
 
     }
