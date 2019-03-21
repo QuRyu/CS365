@@ -75,6 +75,6 @@ traverse_dir(const std::string &dir_fp) {
 }
 
 inline 
-bool file_exists(const std::fstream &stream) {
+bool file_exists(const std::ifstream &stream) {
     return stream.good();
 }
