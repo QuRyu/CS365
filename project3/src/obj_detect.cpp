@@ -98,6 +98,47 @@ void read_db(ifstream &stream, vector<Features> &v) {
     }
 }
 
+void draw_features(const Mat &src, Features f) {
+    Mat src_gray;
+    int thresh = 100;
+    int max_thresh = 255;
+    RNG rng(12345);
+
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+
+    /// Convert image to gray and blur it
+    cvtColor( src, src_gray, COLOR_BGR2GRAY );
+    blur( src_gray, src_gray, Size(3,3) );
+
+    Mat canny_output;
+
+    /// Detect edges using canny
+    Canny( src_gray, canny_output, thresh, thresh*2, 3 );
+    /// Find contours
+    Mat dst = Mat::zeros(src.rows, src.cols, CV_8UC3);
+    findContours( canny_output, contours, hierarchy,
+        RETR_EXTERNAL, CHAIN_APPROX_SIMPLE );
+    // iterate through all the top-level contours,
+    // draw each connected component with its own random color
+    int idx = 0;
+    for( ; idx >= 0; idx = hierarchy[idx][0] )
+    {
+        Scalar color( 255, 255, 255 );
+        drawContours( dst, contours, idx, color, FILLED, 8, hierarchy );
+    }
+    namedWindow( "Components", 1 );
+    imshow( "Components", dst );
+    waitKey(0);
+
+
+    // Mat dst = Mat::zeros(src.rows, src.cols, CV_32FC3);
+    // Scalar color( rand()&255, rand()&255, rand()&255 );
+    // drawContours(dst, f.contours, -1, color, FILLED, 8);
+    // imshow("img", dst);
+    // waitKey(0);
+}
+
 int main(int argc, char *argv[]) {
     /* Argument Format: source (path)
      * source: 0 for camera and 1 for directories 
@@ -138,11 +179,11 @@ int main(int argc, char *argv[]) {
     	//     f.write_to_fstream(db_stream);
     	// }
 
-    	while (true) {
+	while (true) {
     	    cout << "the path of photo to compare: " << endl; 
 
-                //string cmp_path; 
-		//cin >> cmp_path; 
+            //string cmp_path; 
+            //cin >> cmp_path; 
 	    // use fixed path for now 
 	    string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/shovel.002.png");
 	    cout << "cmp_path " << cmp_path << endl;
@@ -152,15 +193,14 @@ int main(int argc, char *argv[]) {
 
 	    auto img_processed = process_img(img);
 
-	    namedWindow(cmp_path, 1);
-	    imshow(cmp_path, img_processed);
-	
 
 	    // use classifier to find which image 
 	    auto [_, dist, f] = euclidean(features, cmp_feature);
 	    // TODO: find the value K from the list of directories we read 
 	    //auto [_, label] = k_means(features, cmp_feature, 9);
 	    cout << f.label << endl;
+            //draw_features(img, cmp_feature);
+    	// }
 
 	    waitKey(0);
     	}
