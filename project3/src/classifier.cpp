@@ -9,7 +9,6 @@
 #include <tuple> 
 
 #include <opencv2/ml.hpp>
-#include <opencv2/dnn.hpp>
 
 #include "utilities.hpp"
 
