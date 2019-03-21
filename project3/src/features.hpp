@@ -6,21 +6,27 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 
+// number of features for each image 
+const int NUM_OF_FEATURES = 10;
+
 struct Features {
     std::vector<double> feature; 
     double centroid_x; 
     double centroid_y; 
     double orientation; 
-    std::vector<std::vector<cv::Point>> contours;
+    //std::vector<std::vector<cv::Point>> contours;
     std::string label;
 
     Features() { }
 
-    Features(std::vector<double> features, std::vector<std::vector<cv::Point>> contours,
+    //Features(std::vector<double> features, std::vector<std::vector<cv::Point>> contours,
+    Features(std::vector<double> features, 
     	double ctd_x, double ctd_y, double ort) : 
 		feature(features), centroid_x(ctd_x), 
 		centroid_y(ctd_y), orientation(ort) {
     }
+
+    Features(const Features &f) = default;
 
     inline 
     int num_of_features() const { 
@@ -40,6 +46,8 @@ struct Features {
 };
 
 std::ostream& operator<<(std::ostream& os, const Features &f);
+
+std::istream& operator>>(std::istream& is, Features &f);
 
 std::vector<std::vector<cv::Point>> compute_contours(const cv::Mat &src);
 

@@ -17,16 +17,27 @@ using namespace cv;
 using namespace std;
 
 ostream& operator<<(ostream& os, const Features &f) { 
-    os << "Feature label " << f.label << endl; 
-    os << "centroid_x: " << f.centroid_x << ", centroid_y " << f.centroid_y 
-	<< ", orientation " << f.orientation << endl;
+    os << f.label << " "; 
+    os << f.centroid_x << " " << f.centroid_y << " " << f.orientation << " ";
 
-    os << "features: "; 
     for (auto v : f.feature) 
-	os << v << ", "; 
-    os << endl << endl;
+	os << v << " "; 
+    os << endl;
 
     return os;
+}
+
+istream& operator>>(istream &is, Features &f) {
+    is >> f.label >> f.centroid_x >> f.centroid_y >> f.orientation;
+
+    vector<double> features(NUM_OF_FEATURES); 
+    for (int i=0; i<NUM_OF_FEATURES; i++) {
+	is >> features[i];
+    }
+
+    f.feature = features;
+
+    return is; 
 }
 
 
@@ -253,7 +264,8 @@ Features compute_features(const Mat &src){
 	features.push_back(ratios[0]);
 	features.push_back(ps[0]);
 	
-	Features f(features, contours, centriods_ort[0], centriods_ort[1], centriods_ort[2]);
+	//Features f(features, contours, centriods_ort[0], centriods_ort[1], centriods_ort[2]);
+	Features f(features, centriods_ort[0], centriods_ort[1], centriods_ort[2]);
 
 	return f;
 }
