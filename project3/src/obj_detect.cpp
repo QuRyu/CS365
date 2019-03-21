@@ -26,7 +26,7 @@ using namespace cv;
 // return the DB path 
 std::string DB_path() {
 #ifdef macOS_Qingbo 
-    string path = "/Users/HereWegoR/Document/CS/CS365/project3/data/db.txt";
+    string path = "/Users/HereWegoR/Documents/CS/CS365/project3/data/db.txt";
     return path;
 #endif 
 
@@ -66,8 +66,8 @@ Features process_one_image(const Mat &img, const string &label) {
     // process the image for segmentation  
     auto processed = process_img(img);
 
-    Features f;
-    f = compute_features(img);
+    //Features f;
+    auto f = compute_features(img);
 
     auto label_ex = extract_label(label);
 
@@ -84,16 +84,17 @@ vector<Features> process_multiple_images(const vector<Mat> &images,
     vector<Features> features;
 
     for (int i=0; i<images.size(); i++) {
-	   features.push_back(process_one_image(images[i], labels[i]));
+	features.push_back(process_one_image(images[i], labels[i]));
     }
 
     return features;
 }
 
-void read_db(ifstream &stream, vector<Features> &v) {
+void read_db(fstream &stream, vector<Features> &v) {
     Features f; 
-    while (!stream.eof()) {
-	stream >> f; 
+    for (string line; getline(stream, line); ) {
+	istringstream iss(line);
+	iss >> f; 
 	v.push_back(f);
     }
 }
@@ -147,7 +148,7 @@ int main(int argc, char *argv[]) {
 
     bool camera;
     string img_fp; 
-    //fstream db_stream(DB_path());
+    fstream db_stream(DB_path(), fstream::in);
 
     if (argc < 1) {
 	cerr << "no argument provided" << endl;
@@ -158,9 +159,21 @@ int main(int argc, char *argv[]) {
     }
 
     vector<Features> features;
-    //if (file_exists(db_stream)) { // if db file exists, first read the data
-	//read_db(db_stream, features);
-    //}
+    if (file_exists(db_stream)) { // if db file exists, first read the data
+	int read;
+	cout << "read from file? 1 for yes and 0 for no" << endl;
+	cin >> read; 
+	
+	if (read)
+	    read_db(db_stream, features);
+
+	cout << "features read from database" << endl;
+	for (auto f : features) {
+	    cout << f << endl;
+	}
+
+	db_stream = fstream(DB_path(), fstream::out | ios_base::app);
+    }
 
 
     if (!camera) { // we are using a list of directories 
@@ -172,12 +185,13 @@ int main(int argc, char *argv[]) {
     	    auto img = imread(img_fp); 
     	    images.push_back(img);
     	}
+
         auto dir_features = process_multiple_images(images, images_fp);
 	features.insert(end(features), begin(dir_features), end(dir_features));
 
-    	// for (auto f : features) {
-    	//     f.write_to_fstream(db_stream);
-    	// }
+	for (auto f : features) {
+	    db_stream << f << endl;
+	}
 
 	while (true) {
     	    cout << "the path of photo to compare: " << endl; 
@@ -277,7 +291,8 @@ int main(int argc, char *argv[]) {
 			//images.push_back(frame);
 			auto feature = process_one_image(frame, label);
 			features.push_back(feature);
-			//feature.write_to_fstream(db_stream);
+			db_stream << feature << endl;
+			db_stream.flush();
 
 			cout << "image with label " << label << " saved" << endl << endl;
 		    }
