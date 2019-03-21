@@ -99,45 +99,62 @@ void read_db(fstream &stream, vector<Features> &v) {
     }
 }
 
-void draw_features(const Mat &src, Features f) {
-    Mat src_gray;
-    int thresh = 100;
-    int max_thresh = 255;
-    RNG rng(12345);
-
-    vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy;
-
-    /// Convert image to gray and blur it
-    cvtColor( src, src_gray, COLOR_BGR2GRAY );
-    blur( src_gray, src_gray, Size(3,3) );
-
+void draw_features(Mat &src, Features f) {
+    // declare Mat variables, thr, gray and src
+    Mat thr, gray;
+     
+    // convert image to grayscale
+    cvtColor( src, gray, COLOR_BGR2GRAY );
     Mat canny_output;
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+     
+    // detect edges using canny
+    Canny( gray, canny_output, 50, 200, 3 );
+     
+    // find contours
+    findContours( canny_output, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE, Point(0, 0) );
+     
+    // get the moments
+    vector<Moments> mu(contours.size());
+    for( int i = 0; i<contours.size(); i++ )
+    { mu[i] = moments( contours[i], false ); }
+     
+    // get the centroid of figures.
+    vector<Point2f> mc(contours.size());
+    for( int i = 0; i<contours.size(); i++)
+    { mc[i] = Point2f( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 ); }
 
-    /// Detect edges using canny
-    Canny( src_gray, canny_output, thresh, thresh*2, 3 );
-    /// Find contours
-    Mat dst = Mat::zeros(src.rows, src.cols, CV_8UC3);
-    findContours( canny_output, contours, hierarchy,
-        RETR_EXTERNAL, CHAIN_APPROX_SIMPLE );
-    // iterate through all the top-level contours,
-    // draw each connected component with its own random color
-    int idx = 0;
-    for( ; idx >= 0; idx = hierarchy[idx][0] )
-    {
-        Scalar color( 255, 255, 255 );
-        drawContours( dst, contours, idx, color, FILLED, 8, hierarchy );
+    // Find the biggest contour
+    double maxArea = 0;
+    int index = 0;
+    for(int i = 0; i < contours.size(); i++){
+        double h = minAreaRect( Mat(contours[i])).size.height;
+        double w = minAreaRect( Mat(contours[i])).size.width;
+        if((h*w) > maxArea){
+            maxArea = h*w;
+            index = i;
+        }
     }
-    namedWindow( "Components", 1 );
-    imshow( "Components", dst );
-    waitKey(0);
+     
+     
+    // draw contours, bounding box, centroid
+    Mat drawing(canny_output.size(), CV_8UC3, Scalar(0,0,0));
+    Scalar color = Scalar(0,0,0); // B G R values
+    for( int i = 0; i<contours.size(); i++ )
+        drawContours(src, contours, i, color, 2, 8, hierarchy, 0, Point());
+    circle( src, mc[index], 4, Scalar(0,0,255,255), -1, 8, 0 );
+    // rotated rectangle
+    Point2f rect_points[4]; 
+    minAreaRect(Mat(contours[index])).points( rect_points );
+    for( int i = 0; i < 4; i++ )
+        line( src, rect_points[i], rect_points[(i+1)%4], color, 1, 8 );
 
-
-    // Mat dst = Mat::zeros(src.rows, src.cols, CV_32FC3);
-    // Scalar color( rand()&255, rand()&255, rand()&255 );
-    // drawContours(dst, f.contours, -1, color, FILLED, 8);
-    // imshow("img", dst);
-    // waitKey(0);
+    // write to picture [predicted_label, centroid_x, centriod_y, orientation]
+    putText(src, f.label, Point(rect_points[2].x, rect_points[2].y-30), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
+    putText(src, "centroid_y: "+to_string(f.centroid_y), Point(rect_points[2].x, rect_points[2].y+30), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
+    putText(src, "centroid_x: "+to_string(f.centroid_x), rect_points[2], FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
+    putText(src, "orientation: "+to_string(f.orientation), Point(rect_points[2].x, rect_points[2].y+60), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
 }
 
 int main(int argc, char *argv[]) {
@@ -213,11 +230,13 @@ int main(int argc, char *argv[]) {
 	    // TODO: find the value K from the list of directories we read 
 	    //auto [_, label] = k_means(features, cmp_feature, 9);
 	    cout << f.label << endl;
-            //draw_features(img, cmp_feature);
-    	// }
+            draw_features(img, cmp_feature);
+                // show the resultant image
+        namedWindow( "Contours", WINDOW_AUTOSIZE );
+        imshow( "Contours", img );
+        waitKey(0);
 
-	    waitKey(0);
-    	}
+    	// }
     } else if (camera) {
         cv::VideoCapture *capdev;
         char label[256];
@@ -257,14 +276,15 @@ int main(int argc, char *argv[]) {
 		printf("frame is empty\n");
 		break;
 	    }
-              
-            cv::imshow("Video", frame);
+        if (!training_mode) {
+        auto frame_feature  = process_one_image(frame, "frame");
+        auto [_, dist, f] = euclidean(features, frame_feature);
+        cout << "object " << f.label << " identified" << endl;
+        draw_features(frame, frame_feature);
+        }    
+        cv::imshow("Video", frame);
             
-	    if (!training_mode) {
-		auto frame_feature  = process_one_image(frame, "frame");
-		auto [_, dist, f] = euclidean(features, frame_feature);
-		cout << "object " << f.label << " identified" << endl;
-	    }
+	    
 
             int key = cv::waitKey(10);
 
