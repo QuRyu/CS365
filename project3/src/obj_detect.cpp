@@ -90,6 +90,14 @@ vector<Features> process_multiple_images(const vector<Mat> &images,
     return features;
 }
 
+void read_db(ifstream &stream, vector<Features> &v) {
+    Features f; 
+    while (!stream.eof()) {
+	stream >> f; 
+	v.push_back(f);
+    }
+}
+
 int main(int argc, char *argv[]) {
     /* Argument Format: source (path)
      * source: 0 for camera and 1 for directories 
@@ -98,7 +106,7 @@ int main(int argc, char *argv[]) {
 
     bool camera;
     string img_fp; 
-    fstream db_stream(DB_path());
+    //fstream db_stream(DB_path());
 
     if (argc < 1) {
 	cerr << "no argument provided" << endl;
@@ -106,9 +114,14 @@ int main(int argc, char *argv[]) {
     } else {
 	int source = atoi(argv[1]);
 	camera = source == 0 ? true : false; 
+    }
 
-    // assuming we are using a list of images 
-    
+    vector<Features> features;
+    //if (file_exists(db_stream)) { // if db file exists, first read the data
+	//read_db(db_stream, features);
+    //}
+
+
     if (!camera) { // we are using a list of directories 
         img_fp = argv[2];
     	auto images_fp = traverse_dir(img_fp);
@@ -118,7 +131,8 @@ int main(int argc, char *argv[]) {
     	    auto img = imread(img_fp); 
     	    images.push_back(img);
     	}
-        auto features = process_multiple_images(images, images_fp);
+        auto dir_features = process_multiple_images(images, images_fp);
+	features.insert(end(features), begin(dir_features), end(dir_features));
 
     	// for (auto f : features) {
     	//     f.write_to_fstream(db_stream);
@@ -130,17 +144,23 @@ int main(int argc, char *argv[]) {
                 //string cmp_path; 
 		//cin >> cmp_path; 
 	    // use fixed path for now 
-	    string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/donut.000.png");
+	    string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/shovel.002.png");
 	    cout << "cmp_path " << cmp_path << endl;
 
     	    auto img = imread(cmp_path); // path needs to be complete
     	    auto cmp_feature = process_one_image(img, cmp_path); 
 
-    	    // use classifier to find which image 
-	    //auto [_, dist, f] = euclidean(features, cmp_feature);
+	    auto img_processed = process_img(img);
+
+	    namedWindow(cmp_path, 1);
+	    imshow(cmp_path, img_processed);
+	
+
+	    // use classifier to find which image 
+	    auto [_, dist, f] = euclidean(features, cmp_feature);
 	    // TODO: find the value K from the list of directories we read 
-	    auto [_, label] = k_means(features, cmp_feature, 8);
-	    cout << label << endl;
+	    //auto [_, label] = k_means(features, cmp_feature, 9);
+	    cout << f.label << endl;
 
 	    waitKey(0);
     	}
@@ -153,15 +173,13 @@ int main(int argc, char *argv[]) {
         std::vector<int> pars;
 	bool training_mode = true; 
 
-    	vector<Mat> images; // the set of images used as a training set 
-    	                    // captured from the camera 
-    	vector<Features> features; // the corresponding features for each image
-
+            //vector<Mat> images; // the set of images used as a training set 
+                                //// captured from the camera 
         
         pars.push_back(5);
         
         // open the video device
-        capdev = new cv::VideoCapture(0);
+        capdev = new cv::VideoCapture(1);
         if( !capdev->isOpened() ) {
         	printf("Unable to open video device\n");
         	return(-1);
@@ -181,56 +199,67 @@ int main(int argc, char *argv[]) {
     	for(;!quit;) {
     	    *capdev >> frame; // get a new frame from the camera, treat as a stream
             
-    	    if( frame.empty() ) {
-    		  printf("frame is empty\n");
-    		  break;
-            }
+	    if( frame.empty() ) {
+		printf("frame is empty\n");
+		break;
+	    }
               
             cv::imshow("Video", frame);
             
+	    if (!training_mode) {
+		auto frame_feature  = process_one_image(frame, "frame");
+		auto [_, dist, f] = euclidean(features, frame_feature);
+		cout << "object " << f.label << " identified" << endl;
+	    }
+
             int key = cv::waitKey(10);
+
             
-            switch(key) {
-        	    case 'q':
-                   quit = 1;
-                   break;
-                      
-        	    case 'c': // capture a photo if the user hits c
-                   sprintf(buffer, "%s.%03d.png", label, frameid++);
-                   cv::imwrite(buffer, frame, pars);
-                   printf("Image written: %s\n", buffer);
-                   break;
+	    switch(key) {
+		case 'q':
+		    quit = 1;
+		    break;
+		      
+		case 'c': // capture a photo if the user hits c
+		    sprintf(buffer, "%s.%03d.png", label, frameid++);
+		    cv::imwrite(buffer, frame, pars);
+		    printf("Image written: %s\n", buffer);
+		    break;
 
-                case 'N': // store the new image into the database 
-                  if (training_mode) { // capture the image only in training mode 
-                  // get the image label 
-                  string label;
-                  cout << "label for the image" << endl; 
-                  cin >> label;
-                  cout << endl; 
+		case 'n': // store the new image into the database 
+		    if (training_mode) { // capture the image only in training 
+					// mode
+			string label;
+			cout << "label for the image" << endl; 
+			cin >> label;
 
-                  // store the image label 
-                      images.push_back(frame);
-                      auto feature = process_one_image(frame, label);
-                      features.push_back(feature);
-                      //feature.write_to_fstream(db_stream);
-                  }
-                  break;
+			// store the image label 
+			//images.push_back(frame);
+			auto feature = process_one_image(frame, label);
+			features.push_back(feature);
+			//feature.write_to_fstream(db_stream);
 
-                case 'x': 
-                  training_mode = false;
-                  break;
-    	    }
+			cout << "image with label " << label << " saved" << endl << endl;
+		    }
+		    break;
+
+		case 'x': 
+		    if (training_mode) {
+			training_mode = false;
+			cout << "training mode off" << endl;
+		    }
+		    break;
+	    }
        
+	}
        
-        	// terminate the video capture
-        	printf("Terminating\n");
-        	delete capdev;
+        // terminate the video capture
+        printf("Terminating\n");
+        delete capdev;
 
-        }
-
-    	return(0);
-
-        }
     }
+        
+
+    return(0);
+    
 }
