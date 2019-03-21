@@ -12,8 +12,7 @@ std::string type2str(int type);
 std::vector<std::string> 
 traverse_dir(const std::string &dir_fp);
 
-bool file_exists(const std::ifstream &stream);
-
+bool file_exists(const std::fstream &stream);
 
 
 #endif 
