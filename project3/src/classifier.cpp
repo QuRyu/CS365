@@ -27,6 +27,7 @@ vector<double> standard_deviation(const vector<Features> &data) {
     vector<double> means(n, 0);
     vector<double> stdev(n, 0);
 
+
     // first calculate the mean of each set of features 
     for (int i=0; i<n; i++) {
 	double sum = 0; 
@@ -66,6 +67,7 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
     // find the standard deviation for each kind of features  
     const auto stdev = standard_deviation(db);
 
+
     // calculate the euclidean distance for image in database and 
     // find the closest one to cmp 
     for (int i=0; i<N; i++) {
@@ -80,8 +82,10 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
 	}
     }
 
+    auto f = db[index];
+
     // for now, don't implement new object detection feature 
-    return make_tuple(true, distance, db[index]);
+    return make_tuple(true, distance, f);
 
 }
 
@@ -102,8 +106,8 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
 tuple<bool, string> k_means(
 	const std::vector<Features> &db, const Features &cmp, int K) {
     // convert the set of labels into numbers 
-    map<string, int> label_converter; 
-    int index = 0; 
+    map<string, float> label_converter; 
+    float index = 0; 
     for (auto f : db) {
 	if (label_converter.find(f.label) == label_converter.end()) {
 	    label_converter[f.label] = index++;
@@ -112,7 +116,7 @@ tuple<bool, string> k_means(
     
     // prepare the data for the algorithms 
     Mat data(db.size(), cmp.num_of_features(), CV_32F),
-	response(db.size(), 1, CV_32S),
+	response(db.size(), 1, CV_32F),
         sample(1, cmp.num_of_features(), CV_32F);
     int N = db.size();
     int n = cmp.num_of_features();
@@ -129,24 +133,35 @@ tuple<bool, string> k_means(
 	sample.at<float>(0, i) = cmp[i];
 
     for (int i=0; i<index; i++) 
-	response.at<int>(i, 0) = label_converter[db[i].label]; 
+	response.at<float>(i, 0) = label_converter[db[i].label]; 
 
     // run the algorithm to classify data 
-    Mat results;
+    Mat results, neighbors;
     auto kn = cv::ml::KNearest::create();
     kn->train(data, cv::ml::ROW_SAMPLE, response);
-    kn->findNearest(sample, K, results); 
+    kn->findNearest(sample, K, results, neighbors); 
     cout << "KNN result " << results.at<float>(0, 0) << endl;
     cout << "results type " << type2str(results.type()) << ", results size " << results.size() << endl;
-    
+
+    map<int, string> label_converter_reversed; 
+
+    for (auto p : label_converter) {
+	label_converter_reversed[p.second] = p.first;
+    }
+
+    for (int i=0; i<K; i++) {
+	cout << "neighbor" << i << " " << label_converter_reversed[neighbors.at<float>(0, i)] << ", " << neighbors.at<float>(0, i) << endl;
+    }
+
+
     // now find the label the response corresponds to 
-    auto findResult = std::find_if( begin(label_converter), 
-	    end(label_converter), [&](const pair<string, int> &elem) {
-	    return elem.second == static_cast<int>(results.at<float>(0));
-    });
+    //auto findResult = std::find_if( begin(label_converter), 
+	    //end(label_converter), [&](const pair<string, int> &elem) {
+	    //return elem.second == static_cast<int>(results.at<float>(0));
+    //});
 
 
-    return make_tuple(true, findResult->first);
+    return make_tuple(true, label_converter_reversed[results.at<float>(0, 0)]);
 
 }
 
