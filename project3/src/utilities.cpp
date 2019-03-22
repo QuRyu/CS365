@@ -37,44 +37,44 @@ std::string type2str(int type) {
 // path of all images
 std::vector<std::string> 
 traverse_dir(const std::string &dir_fp) { 
-    std::string fp_prefix = dir_fp + "/";
-    std::vector<std::string> images_fp; 
-    DIR *dirp; 
-    struct dirent *dp; 
+  std::string fp_prefix = dir_fp + "/";
+  std::vector<std::string> images_fp; 
+  DIR *dirp; 
+  struct dirent *dp; 
 
-    dirp = opendir(dir_fp.c_str());
-    if (dirp == NULL) { 
-        std::cerr << "Cannot open directory " << dir_fp << std::endl;
-        exit(-1);
-    }
+  dirp = opendir(dir_fp.c_str());
+  if (dirp == NULL) { 
+      std::cerr << "Cannot open directory " << dir_fp << std::endl;
+      exit(-1);
+  }
 
-    while ((dp = readdir(dirp)) != NULL) {
-        if (dp->d_type == DT_DIR) {
-           // avoid recursive traversal 
-           if ((strcmp(dp->d_name, ".") != 0) 
-                   && (strcmp(dp->d_name, "..") != 0)) {  
-                auto subdir_fp = fp_prefix + std::string(dp->d_name);
-                auto images_subdir = traverse_dir(subdir_fp);
-                images_fp.insert(images_fp.end(), 
-                        images_subdir.begin(), images_subdir.end());
-            }
-        }
-        else if (strstr(dp->d_name, ".jpg") ||
-                strstr(dp->d_name, ".png") || 
-                strstr(dp->d_name, ".arw") || 
-                strstr(dp->d_name, ".ppm") || 
-                strstr(dp->d_name, ".tif")) {
-            auto fp = fp_prefix + std::string(dp->d_name);
-            images_fp.push_back(fp);
+  while ((dp = readdir(dirp)) != NULL) {
+    if (dp->d_type == DT_DIR) {
+       // avoid recursive traversal 
+       if ((strcmp(dp->d_name, ".") != 0) 
+               && (strcmp(dp->d_name, "..") != 0)) {  
+          auto subdir_fp = fp_prefix + std::string(dp->d_name);
+          auto images_subdir = traverse_dir(subdir_fp);
+          images_fp.insert(images_fp.end(), 
+                  images_subdir.begin(), images_subdir.end());
         }
     }
+    else if (strstr(dp->d_name, ".jpg") ||
+            strstr(dp->d_name, ".png") || 
+            strstr(dp->d_name, ".arw") || 
+            strstr(dp->d_name, ".ppm") || 
+            strstr(dp->d_name, ".tif")) {
+      auto fp = fp_prefix + std::string(dp->d_name);
+      images_fp.push_back(fp);
+    }
+  }
 
-    closedir(dirp);
+  closedir(dirp);
 
-    return images_fp;
+  return images_fp;
 }
 
 bool file_exists(const std::fstream &stream) {
-    return stream.good();
+  return stream.good();
 }
 
