@@ -274,14 +274,26 @@ int main(int argc, char *argv[]) {
       *capdev >> frame; // get a new frame from the camera, treat as a stream
       
       if( frame.empty() ) {
-      printf("frame is empty\n");
-      break;
+        printf("frame is empty\n");
+        break;
       }
       if (!training_mode) {
-      auto frame_feature  = process_one_image(frame, "frame");
-      auto [_, dist, f] = euclidean(features, frame_feature);
-      cout << "object " << f.label << " identified" << endl;
-      draw_features(frame, frame_feature, f.label);
+        auto frame_feature  = process_one_image(frame, "frame");
+        auto [_, dist, f] = euclidean(features, frame_feature);
+        //if (dist > 2) { // new object found 
+          //string name; 
+          //cout << "new object identified, dist " << dist << endl;
+          //cout << "enter name" << endl;
+          //cin >> name; 
+
+          //frame_feature.label = name; 
+          //db_stream << frame_feature << endl;
+          //features.push_back(frame_feature);
+        //} else {
+          cout << "object " << f.label << " identified, dist " << dist << endl;
+          draw_features(frame, frame_feature, f.label);
+        //}
+
       }    
       cv::imshow("Video", frame);
 
