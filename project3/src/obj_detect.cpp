@@ -67,7 +67,7 @@ Features process_one_image(const Mat &img, const string &label) {
     auto processed = process_img(img);
 
     Features f;
-    f = compute_features(img);
+    f = compute_features_conn(img);
 
     auto label_ex = extract_label(label);
 
@@ -98,7 +98,43 @@ void read_db(ifstream &stream, vector<Features> &v) {
     }
 }
 
-void draw_features(Mat &src, Features f) {
+Mat draw_features_connected(Mat &src, Features f){
+    Mat processed = threshold(src);
+    Mat inverted;
+    bitwise_not(processed, inverted);
+    
+    Mat labelImage, stats, centroids;
+    int num_labels = connectedComponentsWithStats(inverted, labelImage, stats, centroids, 8, CV_32S);
+
+    // find the largest component
+    int maxSize = 0;
+    int maxIndex = 0;
+    for(int label=1; label<num_labels; label++){
+        if(stats.at<int>(label, CC_STAT_AREA) > maxSize){
+            maxSize = stats.at<int>(label, CC_STAT_AREA);
+            maxIndex = label;
+        }
+    }
+
+    Mat mask(labelImage.size(), CV_8UC1, Scalar(0));
+    mask = (labelImage == maxIndex);
+    Mat r(src.size(), CV_8UC1, Scalar(0));
+    src.copyTo(r,mask);
+
+    int* data = stats.ptr<int>(maxIndex);
+    rectangle(r, Rect(data[0], data[1], data[2], data[3]), Scalar(0,0,255,255));
+    circle( r, Point(f.centroid_x, f.centroid_y), 4, Scalar(0,0,255,255), -1, 8, 0 );
+
+    // write to picture [predicted_label, centroid_x, centriod_y, orientation]
+    putText(r, f.label, Point(f.centroid_x-70, f.centroid_y-90), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
+    putText(r, "centroid_y: "+to_string(f.centroid_y), Point(f.centroid_x-70, f.centroid_y-30), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
+    putText(r, "centroid_x: "+to_string(f.centroid_x), Point(f.centroid_x-70, f.centroid_y-60), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
+    putText(r, "orientation: "+to_string(f.orientation), Point(f.centroid_x-70, f.centroid_y), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
+
+    return r;
+}
+
+Mat draw_features_contours(Mat &src, Features f) {
     // declare Mat variables, thr, gray and src
     Mat thr, gray;
      
@@ -154,6 +190,8 @@ void draw_features(Mat &src, Features f) {
     putText(src, "centroid_y: "+to_string(f.centroid_y), Point(rect_points[2].x, rect_points[2].y+30), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
     putText(src, "centroid_x: "+to_string(f.centroid_x), rect_points[2], FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
     putText(src, "orientation: "+to_string(f.orientation), Point(rect_points[2].x, rect_points[2].y+60), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
+
+    return src;
 }
 
 int main(int argc, char *argv[]) {
@@ -196,13 +234,13 @@ int main(int argc, char *argv[]) {
     	//     f.write_to_fstream(db_stream);
     	// }
 
-	while (true) {
+	// while (true) {
     	    cout << "the path of photo to compare: " << endl; 
 
             //string cmp_path; 
             //cin >> cmp_path; 
 	    // use fixed path for now 
-	    string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/shovel.002.png");
+	    string cmp_path("/personal/ylian/CS365/CS365/project3/data/training/shovel.002.png");
 	    cout << "cmp_path " << cmp_path << endl;
 
     	    auto img = imread(cmp_path); // path needs to be complete
@@ -210,16 +248,17 @@ int main(int argc, char *argv[]) {
 
 	    auto img_processed = process_img(img);
 
-
 	    // use classifier to find which image 
 	    auto [_, dist, f] = euclidean(features, cmp_feature);
+        cout << "here after euclidean" << endl;
+
 	    // TODO: find the value K from the list of directories we read 
-	    //auto [_, label] = k_means(features, cmp_feature, 9);
+	    // auto [_, label] = k_means(features, cmp_feature, 9);
 	    cout << f.label << endl;
-            draw_features(img, cmp_feature);
+            Mat new_img = draw_features_connected(img, cmp_feature);
                 // show the resultant image
-        namedWindow( "Contours", WINDOW_AUTOSIZE );
-        imshow( "Contours", img );
+        namedWindow( "Result", WINDOW_AUTOSIZE );
+        imshow( "Result", new_img );
         waitKey(0);
 
     	// }
@@ -238,7 +277,7 @@ int main(int argc, char *argv[]) {
         pars.push_back(5);
         
         // open the video device
-        capdev = new cv::VideoCapture(1);
+        capdev = new cv::VideoCapture(0);
         if( !capdev->isOpened() ) {
         	printf("Unable to open video device\n");
         	return(-1);
@@ -266,9 +305,9 @@ int main(int argc, char *argv[]) {
         auto frame_feature  = process_one_image(frame, "frame");
         auto [_, dist, f] = euclidean(features, frame_feature);
         cout << "object " << f.label << " identified" << endl;
-        draw_features(frame, frame_feature);
+        Mat new_frame = draw_features_contours(frame, frame_feature);
         }    
-        cv::imshow("Video", frame);
+        cv::imshow("Video", new_frame);
             
 	    
 

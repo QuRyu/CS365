@@ -70,4 +70,6 @@ std::vector<double> compute_centriods_ort(const cv::Mat &src);
 
 Features compute_features(const cv::Mat &src);
 
+Features compute_features_conn(const cv::Mat &src);
+
 #endif // FEATURES_HPP

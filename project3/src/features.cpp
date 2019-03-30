@@ -44,7 +44,7 @@ istream& operator>>(istream &is, Features &f) {
 /* compute the contours of the input Mat and return the biggest contour*/
 vector<vector<Point>> compute_contours(const Mat &src){
 	Mat src_gray;
-	int thresh = 100;
+	int thresh = 50;
 	int max_thresh = 255;
 	RNG rng(12345);
 
@@ -113,13 +113,8 @@ vector<double *> compute_multiple_HuMoments(const Mat &src){
 }
 
 void compute_single_HuMoments(const Mat &src, double *hu) {
-	Mat src_gray, src_thresh;
-	// convert to grayscale
-	cvtColor( src, src_gray, COLOR_BGR2GRAY );
-	// threshold image
-	threshold( src_gray, src_thresh, 128, 255, THRESH_BINARY);
 	// calculate moments
-	Moments mom = moments(src_thresh, false);
+	Moments mom = moments(src, true);
 	// calculate hu moments
 	HuMoments(mom, hu);
 	// Log scale hu moments
@@ -199,14 +194,14 @@ vector<double> compute_percentArea(vector<vector<Point>> contours){
 }
 
 /* compute the centroids and oritentations */
-vector<double> compute_centriods_ort(const Mat &src){
+vector<double> compute_centroids_ort(const Mat &src){
 	vector<double> res;
 
 	Moments m = compute_multiple_moments(src)[0];
-	double centriod_x = m.m10/m.m00;
-	double centriod_y = m.m01/m.m00;
-	res.push_back(centriod_x);
-	res.push_back(centriod_y);
+	double centroid_x = m.m10/m.m00;
+	double centroid_y = m.m01/m.m00;
+	res.push_back(centroid_x);
+	res.push_back(centroid_y);
 
 	double ort = atan2(2*m.mu11,(m.mu20-m.mu02));
 	res.push_back(ort);
@@ -249,10 +244,10 @@ Features compute_features(const Mat &src){
 	// 	printf("percent[%d] %f\n", i, ps[i]);
 	// }
 
-	vector<double> centriods_ort;
-	centriods_ort = compute_centriods_ort(src);
-	// for(int i=0; i<centriods_ort.size(); i++){
-	// 	printf("centriods_ort[%d] %f\n", i, centriods_ort[i]);
+	vector<double> centroids_ort;
+	centroids_ort = compute_centroids_ort(src);
+	// for(int i=0; i<centroids_ort.size(); i++){
+	// 	printf("centroids_ort[%d] %f\n", i, centroids_ort[i]);
 	// }
 
 
@@ -264,8 +259,83 @@ Features compute_features(const Mat &src){
 	features.push_back(ratios[0]);
 	features.push_back(ps[0]);
 	
-	//Features f(features, contours, centriods_ort[0], centriods_ort[1], centriods_ort[2]);
-	Features f(features, centriods_ort[0], centriods_ort[1], centriods_ort[2]);
+	//Features f(features, contours, centroids_ort[0], centroids_ort[1], centroids_ort[2]);
+	Features f(features, centroids_ort[0], centroids_ort[1], centroids_ort[2]);
+
+	return f;
+}
+
+//------------USING CONNECTEDCOMPONENTS------------------
+Features compute_features_conn(const Mat &src){
+	Mat processed = threshold(src);
+	Mat inverted;
+	bitwise_not(processed, inverted);
+	
+	Mat labelImage, stats, centroids;
+	int num_labels = connectedComponentsWithStats(inverted, labelImage, stats, centroids, 8, CV_32S);
+
+	// find the largest component
+	int maxSize = 0;
+	int maxIndex = 0;
+	for(int label=1; label<num_labels; label++){
+		if(stats.at<int>(label, CC_STAT_AREA) > maxSize){
+			maxSize = stats.at<int>(label, CC_STAT_AREA);
+			maxIndex = label;
+		}
+	}
+	cout << "MAX: " << maxIndex << endl;
+	Mat largestComp(inverted, Rect(stats.at<int>(maxIndex,CC_STAT_LEFT), stats.at<int>(maxIndex,CC_STAT_TOP), 
+		stats.at<int>(maxIndex,CC_STAT_WIDTH), stats.at<int>(maxIndex,CC_STAT_HEIGHT)));
+
+	// Mat largestComp = (labelImage == maxIndex);
+
+	// find the HuMoments
+	vector<double *> hu;
+	hu = compute_multiple_HuMoments(src);
+	for(int i=0; i<hu.size(); i++){
+		for(int j=0; j<7; j++){
+			printf("hu[%d][%d] %f\n", i, j, hu[i][j]);
+		}
+	}
+
+	// find the entropy
+	Mat mask(labelImage.size(), CV_8UC1, Scalar(0));
+	mask = (labelImage == maxIndex);
+	Mat r(src.size(), CV_8UC1, Scalar(0));
+    src.copyTo(r,mask);
+	double entropy = compute_entropy(r);
+	cout << "entropy: " << entropy << endl;
+
+	// find the h/w ratio
+	double ratio = stats.at<int>(maxIndex,CC_STAT_HEIGHT)/(double)stats.at<int>(maxIndex,CC_STAT_WIDTH);
+	cout << "height: " << stats.at<int>(maxIndex,CC_STAT_HEIGHT) << endl;
+	cout << "width: " << stats.at<int>(maxIndex,CC_STAT_WIDTH) << endl;
+	cout << "ratio: " << ratio << endl;
+
+	// find the percentage
+	double percentage = maxSize/(double)(stats.at<int>(maxIndex,CC_STAT_HEIGHT)*stats.at<int>(maxIndex,CC_STAT_WIDTH));
+	cout << "maxSize: " << maxSize << endl;
+	cout << "percentage: " << percentage << endl;
+
+	// find centroid and orientation
+	Moments m = moments(inverted, true);
+	double centroid_x = m.m10/m.m00;
+	double centroid_y = m.m01/m.m00;
+	double ort = atan2(2*m.mu11,(m.mu20-m.mu02));
+
+	cout << "centroid_x: " << centroid_x << endl;
+	cout << "centroid_y: " << centroid_y << endl;
+	cout << "ort: " << ort << endl;
+
+	vector<double> features;
+	for(int i=0; i<7; i++){
+		features.push_back(hu[0][i]);
+	}
+	features.push_back(entropy);
+	features.push_back(ratio);
+	features.push_back(percentage);
+	
+	Features f(features, centroid_x, centroid_y, ort);
 
 	return f;
 }
