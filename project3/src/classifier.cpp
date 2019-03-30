@@ -88,7 +88,7 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
 
 }
 
-tuple<bool, double, string> mahattan(const std::vector<Features> &db, const Features &cmp) {
+tuple<bool, double, Features> mahattan(const std::vector<Features> &db, const Features &cmp) {
   double distance = numeric_limits<double>::max(); 
   int index = -1; 
   int N = db.size();
@@ -100,7 +100,7 @@ tuple<bool, double, string> mahattan(const std::vector<Features> &db, const Feat
       dist += abs(db[i][j] - cmp[j]);
     }
 
-    if (dist < distance> {
+    if (dist < distance) {
       index = i; 
       distance = dist;
     }
