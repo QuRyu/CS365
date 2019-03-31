@@ -10,38 +10,36 @@
 const int NUM_OF_FEATURES = 10;
 
 struct Features {
-    std::vector<double> feature; 
-    double centroid_x; 
-    double centroid_y; 
-    double orientation; 
-    //std::vector<std::vector<cv::Point>> contours;
-    std::string label;
+  std::vector<double> feature; 
+  // delete centroids and orientation
+  double centroid_x; 
+  double centroid_y; 
+  double orientation; 
+  //std::vector<std::vector<cv::Point>> contours;
+  std::string label;
 
-    Features() { }
+  Features() { }
 
-    //Features(std::vector<double> features, std::vector<std::vector<cv::Point>> contours,
-    Features(std::vector<double> features, 
-    	double ctd_x, double ctd_y, double ort) : 
-		feature(features), centroid_x(ctd_x), 
-		centroid_y(ctd_y), orientation(ort) {
-    }
+  //Features(std::vector<double> features, std::vector<std::vector<cv::Point>> contours,
+  Features(std::vector<double> features, 
+    double ctd_x, double ctd_y, double ort) : 
+  feature(features), centroid_x(ctd_x), 
+  centroid_y(ctd_y), orientation(ort) {
+  }
 
-    Features(const Features &f) = default;
+  Features(const Features &f) = default;
 
-    inline 
-    int num_of_features() const { 
-	return feature.size();
-    }
+  int num_of_features() const { 
+    return feature.size();
+  }
 
-    inline 
-    double operator[](std::size_t pos) {
-	return feature[pos];
-    }
+  double operator[](std::size_t pos) {
+    return feature[pos];
+  }
 
-    inline 
-    double operator[](std::size_t pos) const { 
-	return feature[pos];
-    }
+  double operator[](std::size_t pos) const { 
+    return feature[pos];
+  }
 
 };
 
@@ -66,7 +64,7 @@ std::vector<double> compute_HWRatios(std::vector<std::vector<cv::Point>> contour
 
 std::vector<double> compute_percentArea(std::vector<std::vector<cv::Point>> contours);
 
-std::vector<double> compute_centriods_ort(const cv::Mat &src);
+std::vector<double> compute_centroids_ort(const cv::Mat &src);
 
 Features compute_features(const cv::Mat &src);
 
