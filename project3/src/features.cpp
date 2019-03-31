@@ -120,19 +120,6 @@ void compute_single_HuMoments(const Mat &src, double *hu) {
 	for(int i = 0; i < 7; i++){
 		hu[i] = -1 * copysign(1.0, hu[i]) * log10(abs(hu[i]));  
 	}
-  // Mat src_gray, src_thresh;
-  // // convert to grayscale
-  // cvtColor( src, src_gray, COLOR_BGR2GRAY );
-  // // threshold image
-  // threshold( src_gray, src_thresh, 128, 255, THRESH_BINARY);
-  // // calculate moments
-  // Moments mom = moments(src_thresh, false);
-  // // calculate hu moments
-  // HuMoments(mom, hu);
-  // // Log scale hu moments
-  // for(int i = 0; i < 7; i++){
-  //   hu[i] = -1 * copysign(1.0, hu[i]) * log10(abs(hu[i]));  
-  // }
 }
 
 double compute_entropy(const Mat &src) {
@@ -271,7 +258,6 @@ Features compute_features(const Mat &src){
 	features.push_back(ratios[0]);
 	features.push_back(ps[0]);
 	
-	//Features f(features, contours, centroids_ort[0], centroids_ort[1], centroids_ort[2]);
 	Features f(features, centroids_ort[0], centroids_ort[1], centroids_ort[2]);
 
 	return f;
@@ -282,7 +268,7 @@ Features compute_features_conn(const Mat &src){
 	Mat processed = threshold(src);
 	Mat inverted;
 	bitwise_not(processed, inverted);
-	
+
 	Mat labelImage, stats, centroids;
 	int num_labels = connectedComponentsWithStats(inverted, labelImage, stats, centroids, 8, CV_32S);
 
@@ -295,20 +281,17 @@ Features compute_features_conn(const Mat &src){
 			maxIndex = label;
 		}
 	}
-	cout << "MAX: " << maxIndex << endl;
 	Mat largestComp(inverted, Rect(stats.at<int>(maxIndex,CC_STAT_LEFT), stats.at<int>(maxIndex,CC_STAT_TOP), 
 		stats.at<int>(maxIndex,CC_STAT_WIDTH), stats.at<int>(maxIndex,CC_STAT_HEIGHT)));
-
-	// Mat largestComp = (labelImage == maxIndex);
 
 	// find the HuMoments
 	vector<double *> hu;
 	hu = compute_multiple_HuMoments(src);
-	for(int i=0; i<hu.size(); i++){
-		for(int j=0; j<7; j++){
-			printf("hu[%d][%d] %f\n", i, j, hu[i][j]);
-		}
-	}
+	// for(int i=0; i<hu.size(); i++){
+	// 	for(int j=0; j<7; j++){
+	// 		printf("hu[%d][%d] %f\n", i, j, hu[i][j]);
+	// 	}
+	// }
 
 	// find the entropy
 	Mat mask(labelImage.size(), CV_8UC1, Scalar(0));
@@ -316,18 +299,18 @@ Features compute_features_conn(const Mat &src){
 	Mat r(src.size(), CV_8UC1, Scalar(0));
     src.copyTo(r,mask);
 	double entropy = compute_entropy(r);
-	cout << "entropy: " << entropy << endl;
+	// cout << "entropy: " << entropy << endl;
 
 	// find the h/w ratio
 	double ratio = stats.at<int>(maxIndex,CC_STAT_HEIGHT)/(double)stats.at<int>(maxIndex,CC_STAT_WIDTH);
-	cout << "height: " << stats.at<int>(maxIndex,CC_STAT_HEIGHT) << endl;
-	cout << "width: " << stats.at<int>(maxIndex,CC_STAT_WIDTH) << endl;
-	cout << "ratio: " << ratio << endl;
+	// cout << "height: " << stats.at<int>(maxIndex,CC_STAT_HEIGHT) << endl;
+	// cout << "width: " << stats.at<int>(maxIndex,CC_STAT_WIDTH) << endl;
+	// cout << "ratio: " << ratio << endl;
 
 	// find the percentage
 	double percentage = maxSize/(double)(stats.at<int>(maxIndex,CC_STAT_HEIGHT)*stats.at<int>(maxIndex,CC_STAT_WIDTH));
-	cout << "maxSize: " << maxSize << endl;
-	cout << "percentage: " << percentage << endl;
+	// cout << "maxSize: " << maxSize << endl;
+	// cout << "percentage: " << percentage << endl;
 
 	// find centroid and orientation
 	Moments m = moments(inverted, true);
@@ -335,9 +318,9 @@ Features compute_features_conn(const Mat &src){
 	double centroid_y = m.m01/m.m00;
 	double ort = atan2(2*m.mu11,(m.mu20-m.mu02));
 
-	cout << "centroid_x: " << centroid_x << endl;
-	cout << "centroid_y: " << centroid_y << endl;
-	cout << "ort: " << ort << endl;
+	// cout << "centroid_x: " << centroid_x << endl;
+	// cout << "centroid_y: " << centroid_y << endl;
+	// cout << "ort: " << ort << endl;
 
 	vector<double> features;
 	for(int i=0; i<7; i++){

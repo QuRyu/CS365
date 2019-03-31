@@ -173,7 +173,6 @@ Mat draw_features_contours(Mat &src, Features f) {
         }
     }
      
-     
     // draw contours, bounding box, centroid
     Mat drawing(canny_output.size(), CV_8UC3, Scalar(0,0,0));
     Scalar color = Scalar(0,0,0); // B G R values
@@ -254,8 +253,8 @@ int main(int argc, char *argv[]) {
       //string cmp_path; 
       //cin >> cmp_path; 
       // use fixed path for now 
-      //string cmp_path("/personal/ylian/CS365/CS365/project3/data/training/shovel.002.png");
-      string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/shovel.002.png");
+      string cmp_path("/personal/ylian/CS365/CS365/project3/data/training/shovel.002.png");
+      // string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/shovel.002.png");
       cout << "cmp_path " << cmp_path << endl;
 
       auto img = imread(cmp_path); // path needs to be complete
