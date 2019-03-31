@@ -72,7 +72,7 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
   for (int i=0; i<N; i++) {
     double dist = 0; 
     for (int j=0; j<n; j++) {
-      dist += (db[i][j] - cmp[j]) / stdev[j];
+      dist += abs(db[i][j] - cmp[j]) / stdev[j];
     }
 
     if (dist < distance) {
