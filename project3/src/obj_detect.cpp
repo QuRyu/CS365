@@ -250,9 +250,8 @@ int main(int argc, char *argv[]) {
     while (true) {
       cout << "the path of photo to compare: " << endl; 
 
-      // use fixed path for now 
-      string cmp_path("/personal/ylian/CS365/CS365/project3/data/training/shovel.002.png");
-      cout << "cmp_path " << cmp_path << endl;
+      string cmp_path; 
+      cin << cmp_path;
 
       auto img = imread(cmp_path); // path needs to be complete
       auto cmp_feature = process_one_image(img, cmp_path); 
