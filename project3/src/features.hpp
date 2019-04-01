@@ -64,8 +64,10 @@ std::vector<double> compute_HWRatios(std::vector<std::vector<cv::Point>> contour
 
 std::vector<double> compute_percentArea(std::vector<std::vector<cv::Point>> contours);
 
-std::vector<double> compute_centriods_ort(const cv::Mat &src);
+std::vector<double> compute_centroids_ort(const cv::Mat &src);
 
 Features compute_features(const cv::Mat &src);
+
+Features compute_features_conn(const cv::Mat &src);
 
 #endif // FEATURES_HPP
