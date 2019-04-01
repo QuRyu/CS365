@@ -84,9 +84,10 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
 
   auto f = db[index];
 
-  // for now, don't implement new object detection feature 
-  return make_tuple(true, distance, f);
-
+  if (distance > 2) // new object found 
+    return make_tuple(true, distance, f);
+  else 
+    return make_tuple(false, distance, f);
 }
 
 tuple<bool, double, Features> mahattan(const std::vector<Features> &db, const Features &cmp) {
@@ -108,7 +109,10 @@ tuple<bool, double, Features> mahattan(const std::vector<Features> &db, const Fe
     
   }
 
-  return make_tuple(true, distance, db[index]);
+  if (distance > 8) // new object identified 
+    return make_tuple(true, distance, db[index]);
+  else 
+    return make_tuple(false, distance, db[index]);
 }
 
 
@@ -126,7 +130,15 @@ tuple<bool, double, Features> mahattan(const std::vector<Features> &db, const Fe
  * matching 
  */
 tuple<bool, string> kNN(const std::vector<Features> &db, 
-                        const Features &cmp, int K) {
+                        const Features &cmp) {
+  // count how many groups there are -- the value K 
+  set<string> label_set; 
+  for (auto f : db) {
+    label_set.insert(f.label); 
+  }
+
+  int K = label_set.size();
+
   // convert the set of labels into numbers 
   map<string, float> label_converter; 
   float index = 0; 
@@ -135,7 +147,7 @@ tuple<bool, string> kNN(const std::vector<Features> &db,
      label_converter[f.label] = index++;
     }
   }
-    
+
   // prepare the data for the algorithms 
   Mat data(db.size(), cmp.num_of_features(), CV_32F),
       response(db.size(), 1, CV_32F), 
@@ -162,17 +174,33 @@ tuple<bool, string> kNN(const std::vector<Features> &db,
   auto kn = cv::ml::KNearest::create();
   kn->train(data, cv::ml::ROW_SAMPLE, response);
   kn->findNearest(sample, K, results, neighbors); 
-  cout << "KNN result " << results.at<float>(0, 0) << endl;
-  cout << "results type " << type2str(results.type()) << ", results size " << results.size() << endl;
+
+
+  // check if the object is the new one 
+  bool new_obj = true; 
+  map<float, int> neighbor_counter; 
+
+  for (int i=0; i<K; i++) {
+    auto neighbor_response = neighbors.at<float>(i);
+    if (neighbor_counter.find(neighbor_response) == neighbor_counter.end())
+      neighbor_counter[neighbor_response] = 1; 
+    else 
+      neighbor_counter[neighbor_response] += 1; 
+  }
+
+  for (auto p : neighbor_counter) { 
+    if (p.second >= 3) 
+      new_obj = false; 
+  }
 
    // now find the label the response corresponds to 
-   auto findResult = std::find_if( begin(label_converter), 
-     end(label_converter), [&](const pair<string, int> &elem) {
-     return elem.second == static_cast<int>(results.at<float>(0));
-   });
+  auto findResult = std::find_if( begin(label_converter), 
+    end(label_converter), [&](const pair<string, int> &elem) {
+    return elem.second == static_cast<int>(results.at<float>(0));
+  });
 
 
-  return make_tuple(true, findResult->first);
+  return make_tuple(new_obj, findResult->first);
 
 }
 
