@@ -252,11 +252,7 @@ int main(int argc, char *argv[]) {
       cout << "the path of photo to compare: " << endl; 
 
       string cmp_path; 
-      cin >> cmp_path; 
-      // use fixed path for now 
-      // string cmp_path("/personal/ylian/CS365/CS365/project3/data/testing/paddle.010.png");
-      // string cmp_path("/Users/HereWegoR/Documents/CS/CS365/project3/data/training/shovel.002.png");
-      cout << "cmp_path " << cmp_path << endl;
+      cin << cmp_path;
 
       auto img = imread(cmp_path); // path needs to be complete
       auto cmp_feature = process_one_image(img, cmp_path); 
@@ -266,12 +262,11 @@ int main(int argc, char *argv[]) {
 
       // use classifier to find which image 
       auto [_, dist, f] = euclidean(features, cmp_feature);
-      // auto [_, label] = k_means(features, cmp_feature, 5);
-      // auto [_, dist, f] = manhattan(features, cmp_feature);
       cout << f.label << endl;
       // cout << label << endl;
       Mat new_img = draw_features_contours(img, cmp_feature);
       // Mat new_img = draw_features_connected(img, cmp_feature);
+
       // show the resultant image
       namedWindow( "Contours", WINDOW_AUTOSIZE );
       imshow( "Contours", new_img );
@@ -316,6 +311,7 @@ int main(int argc, char *argv[]) {
         printf("frame is empty\n");
         break;
       }
+
       if (!training_mode) {
         auto frame_feature  = process_one_image(frame, "frame");
         auto [_, dist, f] = euclidean(features, frame_feature);
@@ -335,9 +331,8 @@ int main(int argc, char *argv[]) {
         //}
 
       }    
+    
       cv::imshow("Video", new_frame);
-
-
 
       int key = cv::waitKey(10);
 

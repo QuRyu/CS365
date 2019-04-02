@@ -36,7 +36,7 @@ std::tuple<bool, double, Features> manhattan(const std::vector<Features> &db, co
  * 2. Features: the feature in database that is closet to the one we are
  * matching 
  */
-std::tuple<bool, std::string> k_means(const std::vector<Features> &db, const Features &cmp, int K);
+std::tuple<bool, std::string> k_means(const std::vector<Features> &db, const Features &cmp);
 
 
 
