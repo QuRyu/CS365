@@ -73,7 +73,8 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
     double dist = 0; 
     for (int j=0; j<n; j++) {
       auto dif = db[i][j] - cmp[j];
-      dist += (dif * dif) / stdev[j];
+      dist += (dif * dif) / (stdev[j] * stdev[j]);
+      // dist += abs(dif) / stdev[j];
     }
 
     if (dist < distance) {
@@ -90,7 +91,7 @@ tuple<bool, double, Features> euclidean(const std::vector<Features> &db, const F
     return make_tuple(false, distance, f);
 }
 
-tuple<bool, double, Features> mahattan(const std::vector<Features> &db, const Features &cmp) {
+tuple<bool, double, Features> manhattan(const std::vector<Features> &db, const Features &cmp) {
   double distance = numeric_limits<double>::max(); 
   int index = -1; 
   int N = db.size();
@@ -129,7 +130,7 @@ tuple<bool, double, Features> mahattan(const std::vector<Features> &db, const Fe
  * 2. Features: the feature in database that is closet to the one we are
  * matching 
  */
-tuple<bool, string> kNN(const std::vector<Features> &db, 
+tuple<bool, string> k_means(const std::vector<Features> &db, 
                         const Features &cmp) {
   // count how many groups there are -- the value K 
   set<string> label_set; 
@@ -174,7 +175,6 @@ tuple<bool, string> kNN(const std::vector<Features> &db,
   auto kn = cv::ml::KNearest::create();
   kn->train(data, cv::ml::ROW_SAMPLE, response);
   kn->findNearest(sample, K, results, neighbors); 
-
 
   // check if the object is the new one 
   bool new_obj = true; 

@@ -20,14 +20,14 @@ std::tuple<bool, double, Features> euclidean(const std::vector<Features> &db, co
 
 
 /*
- * Mahattan distance classifier  
+ * Manhattan distance classifier  
  *
  * returns a tuple indicating 
  * 1. bool: if the object is a new object  
  * 2. double: the distance 
  * 3. Features: the feature in database that is closest to the one we are matching 
  */
-std::tuple<bool, double, Features> mahattan(const std::vector<Features> &db, const Features &cmp);
+std::tuple<bool, double, Features> manhattan(const std::vector<Features> &db, const Features &cmp);
 
 /**
  * K-means classifier 
@@ -36,7 +36,7 @@ std::tuple<bool, double, Features> mahattan(const std::vector<Features> &db, con
  * 2. Features: the feature in database that is closet to the one we are
  * matching 
  */
-std::tuple<bool, std::string> k_means(const std::vector<Features> &db, const Features &cmp, int K);
+std::tuple<bool, std::string> k_means(const std::vector<Features> &db, const Features &cmp);
 
 
 

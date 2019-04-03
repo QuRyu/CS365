@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cmath>
 #include <regex>
+#include <dirent.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -66,8 +67,8 @@ Features process_one_image(const Mat &img, const string &label) {
   // process the image for segmentation  
   auto processed = process_img(img);
 
-  auto f = compute_features_conn(img);
-  // auto f = compute_features(img);
+  auto f = compute_features(img);
+  // auto f = compute_features_conn(img);
 
   auto label_ex = extract_label(label);
 
@@ -127,10 +128,10 @@ Mat draw_features_connected(Mat &src, Features f){
     circle( r, Point(f.centroid_x, f.centroid_y), 4, Scalar(0,0,255,255), -1, 8, 0 );
 
     // write to picture [predicted_label, centroid_x, centriod_y, orientation]
-    putText(r, f.label, Point(f.centroid_x-70, f.centroid_y-90), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
-    putText(r, "centroid_y: "+to_string(f.centroid_y), Point(f.centroid_x-70, f.centroid_y-30), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
-    putText(r, "centroid_x: "+to_string(f.centroid_x), Point(f.centroid_x-70, f.centroid_y-60), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
-    putText(r, "orientation: "+to_string(f.orientation), Point(f.centroid_x-70, f.centroid_y), FONT_HERSHEY_PLAIN, 2,  Scalar(255,255,255));
+    putText(r, f.label, Point(f.centroid_x-70, f.centroid_y-100), FONT_HERSHEY_PLAIN, 1,  Scalar(255,255,255));
+    putText(r, "centroid_y: "+to_string(f.centroid_y), Point(f.centroid_x-70, f.centroid_y-40), FONT_HERSHEY_PLAIN, 1,  Scalar(255,255,255));
+    putText(r, "centroid_x: "+to_string(f.centroid_x), Point(f.centroid_x-70, f.centroid_y-70), FONT_HERSHEY_PLAIN, 1,  Scalar(255,255,255));
+    putText(r, "orientation: "+to_string(f.orientation), Point(f.centroid_x-70, f.centroid_y-10), FONT_HERSHEY_PLAIN, 1,  Scalar(255,255,255));
 
     return r;
 }
@@ -186,10 +187,10 @@ Mat draw_features_contours(Mat &src, Features f) {
         line( src, rect_points[i], rect_points[(i+1)%4], color, 1, 8 );
 
     // write to picture [predicted_label, centroid_x, centriod_y, orientation]
-    putText(src, f.label, Point(rect_points[2].x, rect_points[2].y-30), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
-    putText(src, "centroid_y: "+to_string(f.centroid_y), Point(rect_points[2].x, rect_points[2].y+30), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
-    putText(src, "centroid_x: "+to_string(f.centroid_x), rect_points[2], FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
-    putText(src, "orientation: "+to_string(f.orientation), Point(rect_points[2].x, rect_points[2].y+60), FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
+    putText(src, f.label, Point(f.centroid_x-70, f.centroid_y-100), FONT_HERSHEY_PLAIN, 1,  Scalar(0,0,255,255));
+    putText(src, "centroid_y: "+to_string(f.centroid_y), Point(f.centroid_x-70, f.centroid_y-40), FONT_HERSHEY_PLAIN, 1,  Scalar(0,0,255,255));
+    putText(src, "centroid_x: "+to_string(f.centroid_x), Point(f.centroid_x-70, f.centroid_y-70), FONT_HERSHEY_PLAIN, 1,  Scalar(0,0,255,255));
+    putText(src, "orientation: "+to_string(f.orientation), Point(f.centroid_x-70, f.centroid_y-10), FONT_HERSHEY_PLAIN, 1,  Scalar(0,0,255,255));
 
     return src;
 }
@@ -262,13 +263,14 @@ int main(int argc, char *argv[]) {
       // use classifier to find which image 
       auto [_, dist, f] = euclidean(features, cmp_feature);
       cout << f.label << endl;
-      Mat new_img = draw_features_connected(img, cmp_feature);
-      
+      // cout << label << endl;
+      Mat new_img = draw_features_contours(img, cmp_feature);
+      // Mat new_img = draw_features_connected(img, cmp_feature);
+
       // show the resultant image
       namedWindow( "Contours", WINDOW_AUTOSIZE );
       imshow( "Contours", new_img );
       waitKey(0);
-
     }
   } else if (camera) {
     cv::VideoCapture *capdev;
@@ -298,7 +300,7 @@ int main(int argc, char *argv[]) {
     
     printf("Expected size: %d %d\n", refS.width, refS.height);
     
-    cv::namedWindow("Video", 1); // identifies a window?
+    cv::namedWindow("Video", 1);
     cv::Mat frame;
     Mat new_frame;
     
@@ -312,14 +314,25 @@ int main(int argc, char *argv[]) {
 
       if (!training_mode) {
         auto frame_feature  = process_one_image(frame, "frame");
-        auto [new_obj, dist, f] = mahattan(features, frame_feature);
-        cout << "object " << f.label << " identified, dist " << dist << endl;
-        Mat new_frame = draw_features_connected(frame, frame_feature);
+        auto [_, dist, f] = euclidean(features, frame_feature);
+        //if (dist > 2) { // new object found 
+          //string name; 
+          //cout << "new object identified, dist " << dist << endl;
+          //cout << "enter name" << endl;
+          //cin >> name; 
+
+          //frame_feature.label = name; 
+          //db_stream << frame_feature << endl;
+          //features.push_back(frame_feature);
+        //} else {
+          cout << "object " << f.label << " identified, dist " << dist << endl;
+          Mat new_frame = draw_features_contours(frame, frame_feature);
+          // Mat new_frame = draw_features_connected(frame, frame_feature);
+        //}
+
       }    
     
       cv::imshow("Video", new_frame);
-
-
 
       int key = cv::waitKey(10);
 

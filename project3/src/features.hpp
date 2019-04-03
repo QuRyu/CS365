@@ -15,7 +15,6 @@ struct Features {
   double centroid_x; 
   double centroid_y; 
   double orientation; 
-  //std::vector<std::vector<cv::Point>> contours;
   std::string label;
 
   Features() { }
