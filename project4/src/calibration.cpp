@@ -6,6 +6,7 @@
 */
 #include <cstdio>
 #include <vector>
+#include <fstream>
 
 #include <opencv2/opencv.hpp>
 
@@ -20,6 +21,8 @@ const int CALIB_NUM_PHOTOS = 5;
 
 auto img_folder = "../data/images/";
 auto img_ext = ".jpg";
+
+auto coefficient_data_file = "../data/cof.txt";
 
 int main(int argc, char *argv[]) {
 	cv::VideoCapture *capdev;
@@ -36,8 +39,8 @@ int main(int argc, char *argv[]) {
 
 	printf("Expected size: %d %d\n", refS.width, refS.height);
 
-	cv::namedWindow("Video", 0); // identifies a window?
-	cv::Mat frame;
+	cv::namedWindow("Video", 1); // identifies a window?
+	cv::Mat frame, gray;
 
   int img_counter = 0;
 
@@ -49,9 +52,13 @@ int main(int argc, char *argv[]) {
 
   *capdev >> frame; 
 
+  // initialize camera matrix
   Mat camera_matrix = Mat::eye(3, 3, CV_64FC1);
   camera_matrix.at<double>(0, 2) = frame.cols/2;
   camera_matrix.at<double>(1, 2) = frame.rows/2;
+
+  cout << "initialized camera matrix: " << camera_matrix << endl << endl;
+
 
 	for(;;) {
 		*capdev >> frame; // get a new frame from the camera, treat as a stream
@@ -61,16 +68,20 @@ int main(int argc, char *argv[]) {
 		  break;
 		}
 
+    // first convert img to gray
+    cvtColor(frame, gray, COLOR_BGR2GRAY);
+
     // check presence of chessboard  
-    bool found = findChessboardCorners(frame, patternsize, corner_set, 
+    bool found = findChessboardCorners(gray, patternsize, corner_set, 
                           CALIB_CB_FAST_CHECK + CALIB_CB_ADAPTIVE_THRESH
                           + CALIB_CB_NORMALIZE_IMAGE); 
 
     if (found) { 
-      //cout << "chessboard found, corner size " << corner_set.size() << endl; 
-      //cout << "first corner (" << corner_set[0].x << ", " 
-                        //<< corner_set[0].y << ")" << endl;
+      // refine the points 
+      cornerSubPix(gray, corner_set, Size(10, 10), Size(-1, -1), 
+                    TermCriteria(TermCriteria::EPS+TermCriteria::MAX_ITER, 30, 0.1));
 
+      // draw points on the chessboard 
       drawChessboardCorners(frame, patternsize, corner_set, found);
     }
 
@@ -101,10 +112,19 @@ int main(int argc, char *argv[]) {
       img_counter++;
 
       if (img_counter == CALIB_NUM_PHOTOS) {
-        Mat dist_coeff, rvecs, tvecs;
+        Mat dist_coeff, rvec, tvec;
+        Mat rvec_pnp, tvec_pnp;
         auto reprojection_error = calibrateCamera(
                     point_list, corner_list, frame.size(), camera_matrix, 
-                    dist_coeff, rvecs, tvecs, CALIB_FIX_ASPECT_RATIO); 
+                    dist_coeff, rvec, tvec, CALIB_FIX_ASPECT_RATIO); 
+        cout << "camera calibration" << endl;
+        cout << "reprojection error " << reprojection_error << endl;
+        cout << "camera matrix: " << camera_matrix <<  endl;
+        cout << "distortion coefficients" << dist_coeff << endl;
+
+        // save rotation and translation 
+        FileStorage fs(coefficient_data_file, FileStorage::WRITE);
+        fs << "camMat" << camera_matrix << "distMat" << dist_coeff;
       }
     }
 	}
