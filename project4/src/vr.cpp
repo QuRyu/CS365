@@ -1,4 +1,4 @@
-*
+/*
  * CS365 Spring 2019 
  * Project 4 
  *
@@ -110,7 +110,16 @@ int main(int argc, char *argv[]) {
       projectPoints(points, rvec, tvec, camera_matrix, dist_coeff, imgPoints);
       arrowedLine(frame, imgPoints[0], imgPoints[1], Scalar(255, 0, 0)); // x-axis 
       arrowedLine(frame, imgPoints[0], imgPoints[2], Scalar(0, 255, 0)); // y-axis 
-      arrowedLine(frame, imgPoints[0], imgPoints[3], Scalar(0, 0, 255)); // y-axis 
+      arrowedLine(frame, imgPoints[0], imgPoints[3], Scalar(0, 0, 255)); // z-axis 
+
+      // extension - cover the target
+      points.clear(); 
+      imgPoints.clear();
+
+      points.emplace_back(-1,-1,0);
+      points.emplace_back(9,6,0);
+      projectPoints(points, rvec, tvec, camera_matrix, dist_coeff, imgPoints);
+      rectangle(frame, imgPoints[0], imgPoints[1], Scalar(0), CV_FILLED);
 
       // a pyramid 
       points.clear(); 
