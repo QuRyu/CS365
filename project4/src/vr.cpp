@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
 	printf("Expected size: %d %d\n", refS.width, refS.height);
 
-	cv::namedWindow("Video", 0); // identifies a window?
+	cv::namedWindow("Video", 1); // identifies a window?
 	cv::Mat frame, gray;
 
   int img_counter = 0;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
       points.emplace_back(-1,-1,0);
       points.emplace_back(9,6,0);
       projectPoints(points, rvec, tvec, camera_matrix, dist_coeff, imgPoints);
-      rectangle(frame, imgPoints[0], imgPoints[1], Scalar(0), CV_FILLED);
+      rectangle(frame, imgPoints[0], imgPoints[1], Scalar(0), FILLED);
 
       // a pyramid 
       points.clear(); 
