@@ -116,10 +116,18 @@ int main(int argc, char *argv[]) {
       points.clear(); 
       imgPoints.clear();
 
-      points.push_back(point_set[0]);
-      points.push_back(point_set[53]);
-      projectPoints(points, rvec, tvec, camera_matrix, dist_coeff, imgPoints);
-      rectangle(frame, imgPoints[0], imgPoints[1], Scalar(0), CV_FILLED);
+      Mat cover(240, 320, CV_8UC3, Scalar(0)); // not sure about the type
+      vector<Point2f> cover_pts{Point2f(0,0), Point2f(320,0), Point2f(320,240), Point2f(0, 240)};
+      vector<Point2f> four_corner_pts;
+      four_corner_pts.push_back(corner_set[0]);
+      four_corner_pts.push_back(corner_set[8]);
+      four_corner_pts.push_back(corner_set[53]);
+      four_corner_pts.push_back(corner_set[45]);
+      Mat transMatrix, output;
+      transMatrix = getPerspectiveTransform(cover_pts, four_corner_pts);
+      warpPerspective(cover, output, transMatrix, frame.size());
+      frame.copyTo(frame, output);
+
 
       // a pyramid 
       points.clear(); 
