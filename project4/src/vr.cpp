@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     bool found = findChessboardCorners(gray, patternsize, corner_set, 
                           CALIB_CB_FAST_CHECK + CALIB_CB_ADAPTIVE_THRESH
                           + CALIB_CB_NORMALIZE_IMAGE); 
-
+    Mat new_frame;
     if (found) { 
        //refine the points 
       cornerSubPix(gray, corner_set, Size(10, 10), Size(-1, -1), 
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
       Mat transMatrix, output;
       transMatrix = getPerspectiveTransform(cover_pts, four_corner_pts);
       warpPerspective(cover, output, transMatrix, frame.size());
-      frame.copyTo(frame, output);
+      frame.copyTo(new_frame, output);
 
 
       // a pyramid 
@@ -141,16 +141,16 @@ int main(int argc, char *argv[]) {
       points.push_back(middle);
       projectPoints(points, rvec, tvec, camera_matrix, dist_coeff, imgPoints);
 
-      line(frame, imgPoints[0], imgPoints[1], Scalar(100, 100, 100), 4);
-      line(frame, imgPoints[0], imgPoints[2], Scalar(100, 100, 100), 4);
-      line(frame, imgPoints[1], imgPoints[2], Scalar(100, 100, 100), 4);
-      line(frame, imgPoints[0], imgPoints[3], Scalar(100, 100, 100), 4);
-      line(frame, imgPoints[1], imgPoints[3], Scalar(100, 100, 100), 4);
-      line(frame, imgPoints[2], imgPoints[3], Scalar(100, 100, 100), 4);
+      line(new_frame, imgPoints[0], imgPoints[1], Scalar(100, 100, 100), 4);
+      line(new_frame, imgPoints[0], imgPoints[2], Scalar(100, 100, 100), 4);
+      line(new_frame, imgPoints[1], imgPoints[2], Scalar(100, 100, 100), 4);
+      line(new_frame, imgPoints[0], imgPoints[3], Scalar(100, 100, 100), 4);
+      line(new_frame, imgPoints[1], imgPoints[3], Scalar(100, 100, 100), 4);
+      line(new_frame, imgPoints[2], imgPoints[3], Scalar(100, 100, 100), 4);
     }
 
 
-    cv::imshow("Video", frame);
+    cv::imshow("Video", new_frame);
 
     auto key = cv::waitKey(10); 
 
