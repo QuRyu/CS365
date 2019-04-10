@@ -116,8 +116,8 @@ int main(int argc, char *argv[]) {
       points.clear(); 
       imgPoints.clear();
 
-      points.emplace_back(-1,-1,0);
-      points.emplace_back(9,6,0);
+      points.push_back(point_set[0]);
+      points.push_back(point_set[53]);
       projectPoints(points, rvec, tvec, camera_matrix, dist_coeff, imgPoints);
       rectangle(frame, imgPoints[0], imgPoints[1], Scalar(0), CV_FILLED);
 
