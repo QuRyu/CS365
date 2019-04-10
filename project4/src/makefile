@@ -39,7 +39,6 @@ hc: harris_corner.o
 aru: aruco.o
 	$(CC) $^ -o $(BINDIR)/$@ $(LDFLAGS) $(LDLIBS) 
 
-
 debug: CFLAGS += -DDEBUG -g 
 debug: obd
 
