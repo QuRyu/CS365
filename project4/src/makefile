@@ -30,6 +30,14 @@ BINDIR = ../bin
 cali: calibration.o 
 	$(CC) $^ -o $(BINDIR)/$@ $(LDFLAGS) $(LDLIBS) 
 
+vr: vr.o
+	$(CC) $^ -o $(BINDIR)/$@ $(LDFLAGS) $(LDLIBS) 
+
+hc: harris_corner.o
+	$(CC) $^ -o $(BINDIR)/$@ $(LDFLAGS) $(LDLIBS) 
+
+
+
 debug: CFLAGS += -DDEBUG -g 
 debug: obd
 

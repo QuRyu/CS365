@@ -17,7 +17,7 @@ using namespace std;
 const int CHESSBOARD_SIZE = 54; 
 const int CHESSBOARD_WIDTH = 9;
 
-const int CALIB_NUM_PHOTOS = 5;
+const int CALIB_NUM_PHOTOS = 8;
 
 auto img_folder = "../data/images/";
 auto img_ext = ".jpg";
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 	cv::VideoCapture *capdev;
 
 	// open the video device
-	capdev = new cv::VideoCapture(0);
+	capdev = new cv::VideoCapture(1);
 	if( !capdev->isOpened() ) {
 		printf("Unable to open video device\n");
 		return(-1);
