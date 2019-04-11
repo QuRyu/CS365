@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	cv::VideoCapture *capdev;
 
 	// open the video device
-	capdev = new cv::VideoCapture(0);
+	capdev = new cv::VideoCapture(1);
 	if( !capdev->isOpened() ) {
 		printf("Unable to open video device\n");
 		return(-1);
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
 	printf("Expected size: %d %d\n", refS.width, refS.height);
 
-	cv::namedWindow("Video", 1); // identifies a window?
+	cv::namedWindow("Video", 0); // identifies a window?
 	cv::Mat frame, gray;
 
   int img_counter = 0;
