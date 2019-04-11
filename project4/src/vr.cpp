@@ -82,7 +82,8 @@ int main(int argc, char *argv[]) {
     bool found = findChessboardCorners(gray, patternsize, corner_set, 
                           CALIB_CB_FAST_CHECK + CALIB_CB_ADAPTIVE_THRESH
                           + CALIB_CB_NORMALIZE_IMAGE); 
-    Mat new_frame(frame.size(), CV_8UC1, Scalar(0));
+    Mat new_frame(frame.size(), frame.type());
+    frame.copyTo(new_frame);
     if (found) { 
        //refine the points 
       cornerSubPix(gray, corner_set, Size(10, 10), Size(-1, -1), 
