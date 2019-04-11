@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
     auto key = cv::waitKey(10); 
 
 		if (key == 'q') {
+			imshow("output", output);
 		  break;
     } else if (key == 's' && found) { 
       // save corners and point 
