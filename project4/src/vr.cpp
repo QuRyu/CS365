@@ -82,8 +82,7 @@ int main(int argc, char *argv[]) {
     bool found = findChessboardCorners(gray, patternsize, corner_set, 
                           CALIB_CB_FAST_CHECK + CALIB_CB_ADAPTIVE_THRESH
                           + CALIB_CB_NORMALIZE_IMAGE); 
-    Mat new_frame(frame.size(), frame.type());
-    frame.copyTo(new_frame);
+
     if (found) { 
        //refine the points 
       cornerSubPix(gray, corner_set, Size(10, 10), Size(-1, -1), 
@@ -117,18 +116,36 @@ int main(int argc, char *argv[]) {
       points.clear(); 
       imgPoints.clear();
 
-      Mat cover(frame.size(), CV_8UC3, Scalar(0)); // not sure about the type
-      vector<Point2f> cover_pts{Point2f(0,0), Point2f(320,0), Point2f(320,240), Point2f(0, 240)};
+      Mat cover(frame.size(), CV_8UC3, Scalar(1)); // not sure about the type
+      Mat output; 
+      int width = frame.cols, height = frame.rows; 
+      vector<Point2f> cover_pts{Point2f(0,0), Point2f(width,0), Point2f(width,height), Point2f(0, height)};
       vector<Point2f> four_corner_pts;
       four_corner_pts.push_back(corner_set[0]);
       four_corner_pts.push_back(corner_set[8]);
       four_corner_pts.push_back(corner_set[53]);
       four_corner_pts.push_back(corner_set[45]);
-      Mat transMatrix, output;
+      Mat transMatrix;
       transMatrix = getPerspectiveTransform(cover_pts, four_corner_pts);
       warpPerspective(cover, output, transMatrix, frame.size());
-      frame.copyTo(new_frame, output);
 
+      assert(output.size() == frame.size());
+      assert(output.channels() == frame.channels());
+      for (int i=0; i<frame.rows; i++) 
+        for (int j=0; j<frame.cols; j++) {
+          cout << "h";
+          if (output.at<Vec3f>(i, j)[0] !=0) {
+            cout << "e";
+            auto intensity = output.at<Vec3f>(i, j);
+            frame.at<Vec3f>(i, j).val[0] = intensity.val[0];
+            frame.at<Vec3f>(i, j).val[1] = intensity.val[1];
+            frame.at<Vec3f>(i, j).val[2] = intensity.val[2];
+            cout << "llo" << endl;
+          }
+
+        }
+      
+      cout << "show" << endl;
       // a pyramid 
       points.clear(); 
       imgPoints.clear();
@@ -141,21 +158,21 @@ int main(int argc, char *argv[]) {
       points.push_back(middle);
       projectPoints(points, rvec, tvec, camera_matrix, dist_coeff, imgPoints);
 
-      line(new_frame, imgPoints[0], imgPoints[1], Scalar(100, 100, 100), 4);
-      line(new_frame, imgPoints[0], imgPoints[2], Scalar(100, 100, 100), 4);
-      line(new_frame, imgPoints[1], imgPoints[2], Scalar(100, 100, 100), 4);
-      line(new_frame, imgPoints[0], imgPoints[3], Scalar(100, 100, 100), 4);
-      line(new_frame, imgPoints[1], imgPoints[3], Scalar(100, 100, 100), 4);
-      line(new_frame, imgPoints[2], imgPoints[3], Scalar(100, 100, 100), 4);
+      line(frame, imgPoints[0], imgPoints[1], Scalar(100, 100, 100), 4);
+      line(frame, imgPoints[0], imgPoints[2], Scalar(100, 100, 100), 4);
+      line(frame, imgPoints[1], imgPoints[2], Scalar(100, 100, 100), 4);
+      line(frame, imgPoints[0], imgPoints[3], Scalar(100, 100, 100), 4);
+      line(frame, imgPoints[1], imgPoints[3], Scalar(100, 100, 100), 4);
+      line(frame, imgPoints[2], imgPoints[3], Scalar(100, 100, 100), 4);
     }
 
 
-    cv::imshow("Video", new_frame);
+    cv::imshow("Video", frame);
 
     auto key = cv::waitKey(10); 
 
 		if (key == 'q') {
-			imshow("output", output);
+      waitKey(0);
 		  break;
     } else if (key == 's' && found) { 
       // save corners and point 
