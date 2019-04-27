@@ -1,0 +1,42 @@
+x_train shape: (60000, 28, 28, 1)
+60000 train samples
+10000 test samples
+epoch  0
+training set: loss 0.10014478627194962, accuracy 0.9703833333333334
+test set: loss 0.10022287321202457, accuracy 0.9689
+epoch  1
+training set: loss 0.0621414905108201, accuracy 0.9807833333333333
+test set: loss 0.06620343666905537, accuracy 0.979
+epoch  2
+training set: loss 0.0466610733213524, accuracy 0.9859166666666667
+test set: loss 0.05769724932997487, accuracy 0.9804
+epoch  3
+training set: loss 0.03766022406431536, accuracy 0.9883833333333333
+test set: loss 0.05069366669035517, accuracy 0.9833
+epoch  4
+training set: loss 0.03184980518318092, accuracy 0.9900666666666667
+test set: loss 0.04742233940957813, accuracy 0.9833
+epoch  5
+training set: loss 0.025650398885284083, accuracy 0.9922833333333333
+test set: loss 0.0442811386407091, accuracy 0.9858
+epoch  6
+training set: loss 0.02122631451811952, accuracy 0.9937166666666667
+test set: loss 0.04349135771734291, accuracy 0.985
+epoch  7
+training set: loss 0.019512030938942916, accuracy 0.99425
+test set: loss 0.04077097954013734, accuracy 0.9867
+epoch  8
+training set: loss 0.017049956018910354, accuracy 0.9951333333333333
+test set: loss 0.03990402613391634, accuracy 0.9864
+epoch  9
+training set: loss 0.013880826367412617, accuracy 0.9959666666666667
+test set: loss 0.04017388372234855, accuracy 0.9867
+epoch  10
+training set: loss 0.012445676688981864, accuracy 0.99635
+test set: loss 0.038933029011854525, accuracy 0.9871
+epoch  11
+training set: loss 0.010790946510246917, accuracy 0.997
+test set: loss 0.036496117533335926, accuracy 0.9882
+epoch  12
+training set: loss 0.009554870421808543, accuracy 0.9973166666666666
+test set: loss 0.03736378826096843, accuracy 0.9886
