@@ -77,9 +77,6 @@ def main():
   # np.save(test_file, test_scores)
 
   model.save("../data/model.h5")
-
-
-
     
 if __name__ == "__main__":
     main()

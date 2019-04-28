@@ -1,5 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from keras.datasets import mnist 
+
+def plotFirstTwo():
+  (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+  fig, (first, second) = plt.subplots(nrows=2, ncols=1)
+
+  first.imshow(x_train[0], cmap='gray')
+  second.imshow(x_train[1], cmap='gray')
+
+  plt.show()
 
 def main():
   train_file = open("../data/train_scores", "rb") 
@@ -29,4 +40,5 @@ def main():
 
 
 if __name__ == "__main__":
+  # plotFirstTwo()
   main()
