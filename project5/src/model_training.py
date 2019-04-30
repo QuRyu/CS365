@@ -51,6 +51,7 @@ def main():
 
   model = models.Sequential()
   model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=input_shape))
+  model.add(Conv2D(64, kernel_size=(3,3), activation='relu'))
   model.add(MaxPooling2D(pool_size=(2,2)))
   model.add(Dropout(0.25))
   model.add(Flatten())
@@ -71,10 +72,10 @@ def main():
       train_scores[i] = model.evaluate(x_train, y_train, verbose=0)
       test_scores[i] = model.evaluate(x_test, y_test, verbose=0)
 
-  # train_file = open("../data/train_scores", "wb")
-  # test_file = open("../data/test_scores", "wb")
-  # np.save(train_file, train_scores)
-  # np.save(test_file, test_scores)
+  train_file = open("../data/train_scores", "wb")
+  test_file = open("../data/test_scores", "wb")
+  np.save(train_file, train_scores)
+  np.save(test_file, test_scores)
 
   model.save("../data/model.h5")
     
