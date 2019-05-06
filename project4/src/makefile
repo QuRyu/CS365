@@ -13,7 +13,7 @@ endif
 
 ifeq ($(OSNAME), Linux) 
     CC = g++
-    CFLAGS = -I../include -Dlinux_Iris
+    CFLAGS = -I../include -I/usr/local/include/opencv4 -Dlinux_Iris
     LDFLAGS = -L/usr/lib/x86_64-linux-gnu 
 
 endif 
@@ -22,7 +22,7 @@ endif
 CXXFLAGS = $(CFLAGS)
 CXX = $(CC)
 
-LDLIBS = -lopencv_core -lopencv_highgui -lopencv_video -lopencv_videoio -lopencv_imgproc -lopencv_imgcodecs -lopencv_objdetect -lopencv_ml -lopencv_calib3d -laruco.3.1.0
+LDLIBS = -lopencv_core -lopencv_highgui -lopencv_video -lopencv_videoio -lopencv_imgproc -lopencv_imgcodecs -lopencv_objdetect -lopencv_ml -lopencv_calib3d 
 		 
 
 BINDIR = ../bin
