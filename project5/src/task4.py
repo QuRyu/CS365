@@ -18,7 +18,18 @@ epochs = 12
 # input image dimensions
 img_rows, img_cols = 28, 28
 
+# set of dropout rates to evaluate, the pair (0.2, 0.4) has the best performance  
 dropout_rates = [(0.1, 0.2), (0.2, 0.4), (0.25, 0.5), (0.3, 0.6), (0.35, 0.7), (0.4, 0.8)]
+
+
+# on training data, (2,2) was the best 
+# but (4, 4) performs better on test data 
+kernel_sizes = [(2,2), (3,3), (4,4), (5,5)]
+
+# 1024 was the best, but 512 was the worst 
+dense_nodes = [64, 128, 256, 512, 1024]
+
+batch_sizes = [32, 64, 128, 256, 512, 1024]
 
 def main():
   np.random.seed(42)
@@ -47,20 +58,18 @@ def main():
   y_test = keras.utils.to_categorical(y_test, num_classes)
 
   # arrays holding accuracy and losses 
-  test_scores = np.zeros((len(dropout_rates), 2))
-  train_scores = np.zeros((len(dropout_rates), 2))
+  test_scores = np.zeros((len(batch_sizes), 2))
+  train_scores = np.zeros((len(batch_sizes), 2))
 
-  for i in range(len(dropout_rates)):
-    r1, r2 = dropout_rates[i]
-    print("evauating dropout pair({}, {})".format(r1, r2))
+  for i in range(len(batch_sizes)):
     model = models.Sequential()
-    model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=input_shape))
-    model.add(Conv2D(64, kernel_size=(3,3), activation='relu'))
+    model.add(Conv2D(32, kernel_size=(4,4), activation='relu', input_shape=input_shape))
+    model.add(Conv2D(64, kernel_size=(4,4), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(r1))
+    model.add(Dropout(0.2))
     model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
-    model.add(Dropout(r2))
+    model.add(Dense(1024, activation='relu'))
+    model.add(Dropout(0.4))
     model.add(Dense(num_classes, activation='softmax'))
 
     model.compile(loss=keras.losses.categorical_crossentropy,
@@ -68,15 +77,15 @@ def main():
                   metrics=['accuracy'])
 
     model.fit(x_train, y_train, 
-                  batch_size=batch_size, 
+                  batch_size=batch_sizes[i], 
                   epochs=12, 
                   verbose=1, 
                   validation_data=(x_test, y_test))
-    train_scores[i] = model.evaluate(x_train, y_train, verbose=0)
-    test_scores[i] = model.evaluate(x_test, y_test, verbose=0)
+    train_scores[i] = model.evaluate(x_train, y_train, verbose=1)
+    test_scores[i] = model.evaluate(x_test, y_test, verbose=1)
 
-  train_file = open("../data/dropout_rate_train_scores", "wb")
-  test_file = open("../data/dropout_rate_test_scores", "wb")
+  train_file = open("../data/batch_sizes_train_scores", "wb")
+  test_file = open("../data/batch_sizes_test_scores", "wb")
   np.save(train_file, train_scores)
   np.save(test_file, test_scores)
 
