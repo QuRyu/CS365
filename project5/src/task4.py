@@ -13,7 +13,7 @@ from tensorflow.keras import backend as K
 
 batch_size = 128
 num_classes = 10
-epochs = 12
+# epochs = 12
 
 # input image dimensions
 img_rows, img_cols = 28, 28
@@ -29,7 +29,10 @@ kernel_sizes = [(2,2), (3,3), (4,4), (5,5)]
 # 1024 was the best, but 512 was the worst 
 dense_nodes = [64, 128, 256, 512, 1024]
 
+# both 128 and 1024 are pretty good 
 batch_sizes = [32, 64, 128, 256, 512, 1024]
+
+epochs = [10, 12, 14, 16, 18, 20]
 
 def main():
   np.random.seed(42)
@@ -58,10 +61,10 @@ def main():
   y_test = keras.utils.to_categorical(y_test, num_classes)
 
   # arrays holding accuracy and losses 
-  test_scores = np.zeros((len(batch_sizes), 2))
-  train_scores = np.zeros((len(batch_sizes), 2))
+  test_scores = np.zeros((len(epochs), 2))
+  train_scores = np.zeros((len(epochs), 2))
 
-  for i in range(len(batch_sizes)):
+  for i in range(len(epochs)):
     model = models.Sequential()
     model.add(Conv2D(32, kernel_size=(4,4), activation='relu', input_shape=input_shape))
     model.add(Conv2D(64, kernel_size=(4,4), activation='relu'))
@@ -77,15 +80,15 @@ def main():
                   metrics=['accuracy'])
 
     model.fit(x_train, y_train, 
-                  batch_size=batch_sizes[i], 
-                  epochs=12, 
+                  batch_size=128,
+                  epochs=epochs[i], 
                   verbose=1, 
                   validation_data=(x_test, y_test))
     train_scores[i] = model.evaluate(x_train, y_train, verbose=1)
     test_scores[i] = model.evaluate(x_test, y_test, verbose=1)
 
-  train_file = open("../data/batch_sizes_train_scores", "wb")
-  test_file = open("../data/batch_sizes_test_scores", "wb")
+  train_file = open("../data/epochs_train_scores", "wb")
+  test_file = open("../data/epochs_test_scores", "wb")
   np.save(train_file, train_scores)
   np.save(test_file, test_scores)
 
