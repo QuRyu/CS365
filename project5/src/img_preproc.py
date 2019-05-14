@@ -1,3 +1,6 @@
+# CS365 Spring 2019 
+# Project 5
+# Qingbo Liu, Iris Lian 
 # read in image file and convert them to csv file 
 
 import os 

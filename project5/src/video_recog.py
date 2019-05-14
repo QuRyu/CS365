@@ -1,3 +1,7 @@
+# CS365 Spring 2019 
+# Project 5
+# Qingbo Liu, Iris Lian 
+
 import cv2 as cv 
 import numpy as np
 import keras 
