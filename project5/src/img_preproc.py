@@ -4,8 +4,8 @@ import os
 import csv 
 import cv2 as cv
 
-def main():
-    path = "../data/greek/"
+def process(filename):
+    path = "../data/"+filename+"/"
     files = [] 
     labels = {}
 
@@ -14,9 +14,9 @@ def main():
             if '.png' in file: 
                 files.append((os.path.join(r, file), file))
 
-    with open("../data/greek_data.csv", "w", newline='') as dataF:
-     with open("../data/greek_label.csv", "w") as labelF: 
-      with open("../data/greek_label_map.csv", "w") as mapF:
+    with open("../data/"+filename+"_data.csv", "w", newline='') as dataF:
+     with open("../data/"+filename+"_label.csv", "w") as labelF: 
+      with open("../data/"+filename+"_label_map.csv", "w") as mapF:
         dataW = csv.writer(dataF, delimiter=' ')
         labelW = csv.writer(labelF, delimiter=' ')
         mapW = csv.writer(mapF, delimiter=' ')
@@ -48,4 +48,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # process("greek")
+    process("greek_ours")
+
