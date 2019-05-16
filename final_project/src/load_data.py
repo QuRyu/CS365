@@ -1,10 +1,11 @@
 import os 
 
-from cv2 import imread 
+from cv2 import imread, imshow, waitKey
 import numpy as np
 from keras import backend as K 
 
 img_rows = img_cols = 64
+first_read = True
 
 # load labels for each class 
 def load_labels(path):
@@ -29,6 +30,9 @@ def load_wnids(path):
 
 
 def load_train_data(path, wnids, wnids_to_label, dtype):
+    global first_read 
+    global first_img 
+
     print("loading training data")
 
     x_train = []
@@ -52,15 +56,20 @@ def load_train_data(path, wnids, wnids_to_label, dtype):
             img_file = os.path.join(path, 'train', wnid, 'images', img_file)
             img = imread(img_file)
 
-            # why do we need this line?
-            # x_train_block[j] = img.transpose(2, 0, 1)
+            if first_read:
+                first_read = False 
+                first_img = img
+
+            x_train_block[j] = img
+
             
         x_train.append(x_train_block)
         y_train.append(y_train_block)
 
 
-    x_train = np.concatenate(x_train, axis=0)
-    y_train = np.concatenate(y_train, axis=0)
+    # x_train = np.concatenate(x_train, axis=0)
+    # x_train = np.concatenate(x_train)
+    # y_train = np.concatenate(y_train, axis=0)
 
     return x_train, y_train
 
@@ -89,7 +98,7 @@ def load_validation_data(path, wnids, wnids_to_label, dtype):
             img_file = os.path.join(path, 'val', 'images', img_file)
             img = imread(img_file)
 
-            # x_val[i] = img.transpose(2, 0, 1)
+            x_val[i] = img
         
         return x_val, y_val
 
@@ -107,8 +116,13 @@ def load_tiny_imagenet(path, dtype=np.float32):
 if __name__ == "__main__":
     x_train, y_val, x_val, y_val, wnids, wnids_to_words, wnids_to_words = \
             load_tiny_imagenet("/home/quryu/Downloads/tiny-imagenet-200")
+    
+    print("are they equal? ", first_img == x_train[0][0])
+    imshow("first image", first_img)
+    imshow("block read", x_train[0][0])
 
-    print(x_train.shape)
+    waitKey(0)
+
 
 
 
