@@ -1,6 +1,6 @@
 from keras.models import Model 
 from keras import layers 
-import keras.layers as layers
+# import keras.layers as layers
 from keras.regularizers import l2
 from keras import backend as K 
 
@@ -30,16 +30,16 @@ def _connect(input, residual):
     shortcut = input 
     print("input shape", input_shape)
     print("residual shape", residual_shape)
+    print("stride width {}, height {}, equal channels? {}".format(stride_width, stride_height, equal_channels))
     # 1x1 conv if the shape is different; otherwise just identity 
     if stride_width > 1 or stride_height > 1 or not equal_channels:
-        shortcut = layers.Conv2D(filters=residual_shape[ROW_AXIS],
+        shortcut = layers.Conv2D(filters=residual_shape[CHANNEL_AXIS],
                           kernel_size=(1,1),
                           strides=(stride_width, stride_height),
                           padding='valid',
                           kernel_initializer='he_normal',
                           kernel_regularizer=l2(0.0001))(input)
         print("shortcut shape", K.int_shape(shortcut))
-        print("1x1 conv for shortcut")
 
     return layers.merge.add([shortcut, residual])
 
@@ -59,7 +59,7 @@ def _dim_ordering():
     global COL_AXIS 
     global CHANNEL_AXIS 
 
-    if K.image_dim_ordering == 'tf':
+    if K.image_data_format != "channels_first":
         ROW_AXIS = 1 
         COL_AXIS = 2 
         CHANNEL_AXIS = 3 
