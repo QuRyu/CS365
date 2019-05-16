@@ -1,19 +1,30 @@
+import sys 
+
 from keras.models import Model 
 from keras import layers 
 # import keras.layers as layers
 from keras.regularizers import l2
 from keras import backend as K 
 
+import load_data as data 
+
 def _add_common_layer(l):
     # build BN->relu block
-    l = layers.BatchNormalization()(l)
+    l = layers.BatchNormalization(axis=CHANNEL_AXIS)(l)
     l = layers.LeakyReLU()(l)
 
     return l 
 
-def _add_common_layer_conv(l, filters, kernel_size, strides=(1,1)):
+def _add_common_layer_conv(l, filters, kernel_size, 
+        strides=(1,1), kernel_initializer='he_normal', 
+        kernel_regularizer=l2(1.e-4),
+        padding='same'):
     # build Conv -> BN -> relu block
-    l = layers.Conv2D(filters=filters, kernel_size=kernel_size, strides=strides)(l)
+    l = layers.Conv2D(filters=filters, kernel_size=kernel_size, 
+            strides=strides, 
+            kernel_initializer=kernel_initializer,
+            kernel_regularizer=kernel_regularizer,
+            padding=padding)(l)
     l = _add_common_layer(l)
 
     return l
@@ -23,7 +34,7 @@ def _connect(input, residual):
 
     input_shape = K.int_shape(input)
     residual_shape = K.int_shape(residual)
-    stride_width = int(round(input_shape[ROW_AXIS] / residual_shape[ROW_AXIS]))
+    stride_width = int(round(input_shape[ROW_AXIS] / residual_shape[ROW_AXIS])) 
     stride_height = int(round(input_shape[COL_AXIS] / residual_shape[COL_AXIS]))
     equal_channels = input_shape[CHANNEL_AXIS] == residual_shape[CHANNEL_AXIS]
 
@@ -78,9 +89,10 @@ def buildResNet(num_outputs, block_fn, repetitions, input_shape=(64, 64, 3)):
 
     input = layers.Input(shape=input_shape)
 
-    x = layers.Conv2D(64, kernel_size=(7,7), strides=(2,2), padding='same')(input)
-    x = _add_common_layer_conv(x, filters=64, kernel_size=(7,7), strides=(2,2))
+    # x = layers.Conv2D(64, kernel_size=(7,7), strides=(2,2), padding='same')(input)
+    x = _add_common_layer_conv(input, filters=64, kernel_size=(7,7), strides=(2,2))
     x = layers.MaxPool2D(pool_size=(3,3), strides=(2,2), padding='same')(x)
+    print("shape after pooling", K.int_shape(x))
 
     block = x 
     filters = 64 
@@ -94,9 +106,9 @@ def buildResNet(num_outputs, block_fn, repetitions, input_shape=(64, 64, 3)):
 
     x = layers.AveragePooling2D(pool_size=(block_shape[ROW_AXIS], block_shape[COL_AXIS]), strides=(1,1))(block)
     x = layers.Flatten()(x)
-    x = Dense(units=num_outputs, kernel_initializer='he_normal', activation='softmax')(x)
+    x = layers.Dense(units=num_outputs, kernel_initializer='he_normal', activation='softmax')(x)
 
-    model = Model(inputs=input, outputs=dense)
+    model = Model(inputs=input, outputs=x)
     return model 
                                                 
 
@@ -110,8 +122,8 @@ def basic_block_fn(filters, init_strides=(1,1), is_first_block=False):
                                  kernel_initializer='he_normal', 
                                  kernel_regularizer=l2(1e-4))(input)
         else:
-            conv = _add_common_layer_conv(filters=filters, kernel_size=(3,3),
-                                          strides=init_strides)(input)
+            conv = _add_common_layer_conv(input, filters=filters, kernel_size=(3,3),
+                                          strides=init_strides)
 
         residual = _add_common_layer_conv(conv, filters=filters, kernel_size=(3,3))
         return _connect(input, residual)
@@ -123,27 +135,58 @@ def bottleneck_fn(filters, init_strides=(1,1), is_first_block=False):
 
     def f(input):
         if is_first_block:
-            conv = conv2D(filters=filters, kernel_size=(1,1),
+            conv = layers.Conv2D(filters=filters, kernel_size=(1,1),
                           strides=init_strides, 
                           padding='same',
                           kernel_initializer='he_normal',
                           kernel_regularizer=l2(1e-4))(input)
         else:
-            conv = _add_common_layer_conv(filters=filters, kernel_size=(1,1),
-                                          strides=init_strides)(input)
+            conv = _add_common_layer_conv(input, filters=filters, kernel_size=(1,1),
+                                          strides=init_strides)
 
-        conv = _add_common_layer_conv(filters, kernel_size=(3,3))(conv)
-        residual = _add_common_layer_conv(filters, kernel_size=(1,1))(conv)
+        conv = _add_common_layer_conv(conv, filters, kernel_size=(3,3))
+        residual = _add_common_layer_conv(conv, filters, kernel_size=(1,1))
         return _connect(conv, residual)
 
     return f 
 
 
+
 def resnet_18(num_outputs):
     return buildResNet(num_outputs, basic_block_fn, [2, 2, 2, 2])
 
+def resnet_34(num_outputs):
+    return buildResNet(num_outputs, basic_block_fn, [3, 4, 6, 3])
+
+def resnet_50(num_outputs):
+    return buildResNet(num_outputs, bottleneck_fn, [3, 4, 6, 3])
+
+def resnet_101(num_outputs):
+    return buildResNet(num_outputs, bottleneck_fn, [3, 4, 23, 3])
+
+def resnet_152(num_outputs):
+    return buildResNet(num_outputs, bottleneck_fn, [3, 8, 36, 3])
+
+def main(argv):
+    if len(argv) < 2:
+        print("require file path to training data")
+        exit()
+
+    x_train, y_train, x_val, y_val, wnids, wnids_to_label, wnids_to_words = data.load_tiny_imagenet(argv[1])
+
+    model = resnet_101(len(wnids))
+    model.compile(loss="sparse_categorical_crossentropy", 
+                  optimizer="sgd", 
+                  metrics=['accuracy'])
+
+    model.fit(x_train, y_train, 
+              batch_size=128,
+              epochs=12,
+              verbose=1)
+              # validation_data=(x_val, y_val))
+
+
 if __name__ == "__main__":
-    model = resnet_18(200)
-    model.summary()
+    main(sys.argv)
 
 
