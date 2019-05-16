@@ -96,7 +96,6 @@ def load_validation_data(path, wnids, wnids_to_label, dtype):
         for i, img_file in enumerate(img_files):
             img_file = os.path.join(path, 'val', 'images', img_file)
             img = imread(img_file)
-            print(img.dtype)
 
             x_val[i] = img
         
