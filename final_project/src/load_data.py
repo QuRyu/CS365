@@ -97,13 +97,14 @@ def load_validation_data(path, wnids, wnids_to_label, dtype):
         for i, img_file in enumerate(img_files):
             img_file = os.path.join(path, 'val', 'images', img_file)
             img = imread(img_file)
+            print(img.dtype)
 
             x_val[i] = img
         
         return x_val, y_val
 
 
-def load_tiny_imagenet(path, dtype=np.float32):
+def load_tiny_imagenet(path, dtype=np.uint8):
     wnids, wnids_to_label = load_wnids(path)
     wnids_to_words = load_labels(path)
 
@@ -117,7 +118,7 @@ if __name__ == "__main__":
     x_train, y_val, x_val, y_val, wnids, wnids_to_words, wnids_to_words = \
             load_tiny_imagenet("/home/quryu/Downloads/tiny-imagenet-200")
     
-    print("are they equal? ", first_img == x_train[0][0])
+    print("are they equal? ", np.array_equal(first_img, x_train[0][0]))
     imshow("first image", first_img)
     imshow("block read", x_train[0][0])
 
