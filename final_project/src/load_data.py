@@ -67,9 +67,8 @@ def load_train_data(path, wnids, wnids_to_label, dtype):
         y_train.append(y_train_block)
 
 
-    # x_train = np.concatenate(x_train, axis=0)
-    # x_train = np.concatenate(x_train)
-    # y_train = np.concatenate(y_train, axis=0)
+    x_train = np.concatenate(x_train, axis=0)
+    y_train = np.concatenate(y_train, axis=0)
 
     return x_train, y_train
 
