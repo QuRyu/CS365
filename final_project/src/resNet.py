@@ -2,7 +2,6 @@ import sys
 
 from keras.models import Model 
 from keras import layers 
-# import keras.layers as layers
 from keras.regularizers import l2
 from keras import backend as K 
 
