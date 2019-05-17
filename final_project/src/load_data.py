@@ -5,7 +5,6 @@ import numpy as np
 from keras import backend as K 
 
 img_rows = img_cols = 64
-first_read = True
 
 # load labels for each class 
 def load_labels(path):
@@ -30,9 +29,6 @@ def load_wnids(path):
 
 
 def load_train_data(path, wnids, wnids_to_label, dtype):
-    global first_read 
-    global first_img 
-
     print("loading training data")
 
     x_train = []
@@ -47,18 +43,14 @@ def load_train_data(path, wnids, wnids_to_label, dtype):
         num_images = len(filenames)
 
         if K.image_data_format() == "channels_first": 
-            x_train_block = np.zeros((num_images, 3, img_rows, img_cols), dtype=dtype)
+            x_train_block = np.zeros((num_images*5, 3, img_rows, img_cols), dtype=dtype)
         else:
             x_train_block = np.zeros((num_images, img_rows, img_cols, 3), dtype=dtype)
-        y_train_block = wnids_to_label[wnid] * np.ones(num_images, dtype=np.int32)
+        y_train_block = wnids_to_label[wnid] * np.ones(num_images*5, dtype=np.int32)
 
         for j, img_file in enumerate(filenames):
             img_file = os.path.join(path, 'train', wnid, 'images', img_file)
             img = imread(img_file)
-
-            if first_read:
-                first_read = False 
-                first_img = img
 
             x_train_block[j] = img
 
