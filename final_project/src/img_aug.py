@@ -16,9 +16,9 @@ def augment(img):
 
     # shifting right
     shifted_right = np.copy(img)
-    for j in range(img_rows):
-        for i in range(img_cols):
-            if (i < img_cols-20):
+    for j in range(img_cols):
+        for i in range(img_rows):
+            if (i < img_rows-20):
                 shifted_right[j][i] = img[j][i+20]
     imshow("shift_right", shifted_right)
 
@@ -32,7 +32,13 @@ def augment(img):
                     noised[i][j][k] += noise[i][j][k]
     imshow("noise", noised)
 
-    return [flipped_img, shifted_right, noised]
+
+    # rotate
+    M = cv.getRotationMatrix2D((img_cols/2,img_rows/2), 90, 1.0)
+    rotated = cv.warpAffine(img, M, (img_cols,img_rows))
+    imshow("rotated", rotated)
+
+    return [flipped_img, shifted_right, noised, rotated]
 
 
 if __name__ == "__main__":
