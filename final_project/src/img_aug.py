@@ -1,9 +1,6 @@
-import os 
-
 import cv2 as cv
 from cv2 import imread, imshow, waitKey
 import numpy as np
-from keras import backend as K 
 
 img_rows = img_cols = 64
 
@@ -27,6 +24,10 @@ def augment(img):
             for k in range(3):
                 if (noised[i][j][k] != 255):
                     noised[i][j][k] += noise[i][j][k]
+<<<<<<< HEAD
+=======
+    imshow("noise", noised)
+>>>>>>> df08ddd48be638c83af6263cb9924cd48db09a11
 
     # rotate
     M = cv.getRotationMatrix2D((img_cols/2,img_rows/2), 90, 1.0)
