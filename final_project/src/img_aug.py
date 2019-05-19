@@ -6,6 +6,7 @@ img_rows = img_cols = 64
 
 def augment(img):
     print(img.shape)
+    imshow("original", img)
 
     # flip
     flipped_img = np.fliplr(img)
