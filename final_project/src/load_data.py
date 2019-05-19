@@ -4,8 +4,9 @@ from cv2 import imread, imshow, waitKey
 import numpy as np
 from keras import backend as K 
 
+from img_aug import augment
+
 img_rows = img_cols = 64
-first_read = True
 
 # load labels for each class 
 def load_labels(path):
@@ -29,10 +30,7 @@ def load_wnids(path):
     return wnids, wnids_to_label
 
 
-def load_train_data(path, wnids, wnids_to_label, dtype):
-    global first_read 
-    global first_img 
-
+def load_train_data(path, augmentation, wnids, wnids_to_label, dtype):
     print("loading training data")
 
     x_train = []
@@ -44,7 +42,7 @@ def load_train_data(path, wnids, wnids_to_label, dtype):
         boxes_file = os.path.join(path, 'train', wnid, '%s_boxes.txt' % wnid)
         with open(boxes_file, 'r') as f:
             filenames = [x.split('\t')[0] for x in f]
-        num_images = len(filenames)
+        num_images =  len(filenames) * 5 if augmentation else len(filenames)
 
         if K.image_data_format() == "channels_first": 
             x_train_block = np.zeros((num_images, 3, img_rows, img_cols), dtype=dtype)
@@ -56,11 +54,17 @@ def load_train_data(path, wnids, wnids_to_label, dtype):
             img_file = os.path.join(path, 'train', wnid, 'images', img_file)
             img = imread(img_file)
 
-            if first_read:
-                first_read = False 
-                first_img = img
+            if augmentation:
+                augmented = augment(img)
 
-            x_train_block[j] = img
+                idx = j*5
+
+                x_train_block[idx] = img
+                for i in range(len(augmented)):
+                    x_train_block[idx+i+1] = augmented[i]
+            else:
+                x_train_block[j] = img 
+
 
             
         x_train.append(x_train_block)
@@ -96,18 +100,17 @@ def load_validation_data(path, wnids, wnids_to_label, dtype):
         for i, img_file in enumerate(img_files):
             img_file = os.path.join(path, 'val', 'images', img_file)
             img = imread(img_file)
-            print(img.dtype)
 
             x_val[i] = img
         
         return x_val, y_val
 
 
-def load_tiny_imagenet(path, dtype=np.uint8):
+def load_tiny_imagenet(path, augmentation=False, dtype=np.uint8):
     wnids, wnids_to_label = load_wnids(path)
     wnids_to_words = load_labels(path)
 
-    x_train, y_train = load_train_data(path, wnids, wnids_to_label, dtype)
+    x_train, y_train = load_train_data(path, augmentation, wnids, wnids_to_label, dtype)
     x_val, y_val = load_validation_data(path, wnids, wnids_to_label, dtype)
 
     return x_train, y_train, x_val, y_val, wnids, wnids_to_label, wnids_to_words
@@ -117,11 +120,10 @@ if __name__ == "__main__":
     x_train, y_val, x_val, y_val, wnids, wnids_to_words, wnids_to_words = \
             load_tiny_imagenet("/home/quryu/Downloads/tiny-imagenet-200")
     
-    print("are they equal? ", np.array_equal(first_img, x_train[0][0]))
-    imshow("first image", first_img)
-    imshow("block read", x_train[0][0])
-
-    waitKey(0)
+    # print("are they equal? ", np.array_equal(first_img, x_train[0][0]))
+    # imshow("first image", first_img)
+    # imshow("block read", x_train[0][0])
+    print(x_train.shape)
 
 
 
