@@ -8,11 +8,9 @@ from keras import backend as K
 img_rows = img_cols = 64
 
 def augment(img):
-    print(img.shape)
 
     # flip
     flipped_img = np.fliplr(img)
-    imshow("flipped", flipped_img)
 
     # shifting right
     shifted_right = np.copy(img)
@@ -20,7 +18,6 @@ def augment(img):
         for i in range(img_rows):
             if (i < img_rows-20):
                 shifted_right[j][i] = img[j][i+20]
-    imshow("shift_right", shifted_right)
 
     # noise
     noised = np.copy(img)
@@ -30,13 +27,10 @@ def augment(img):
             for k in range(3):
                 if (noised[i][j][k] != 255):
                     noised[i][j][k] += noise[i][j][k]
-    imshow("noise", noised)
-
 
     # rotate
     M = cv.getRotationMatrix2D((img_cols/2,img_rows/2), 90, 1.0)
     rotated = cv.warpAffine(img, M, (img_cols,img_rows))
-    imshow("rotated", rotated)
 
     return [flipped_img, shifted_right, noised, rotated]
 

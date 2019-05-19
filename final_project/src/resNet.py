@@ -1,5 +1,7 @@
 import sys 
+import time 
 
+import keras 
 from keras.models import Model 
 from keras import layers 
 # import keras.layers as layers
@@ -10,7 +12,7 @@ import load_data as data
 
 def _add_common_layer(l):
     # build BN->relu block
-    l = layers.BatchNormalization(axis=CHANNEL_AXIS)(l)
+    l = layers.BatchNormalization()(l)
     l = layers.LeakyReLU()(l)
 
     return l 
@@ -39,9 +41,6 @@ def _connect(input, residual):
     equal_channels = input_shape[CHANNEL_AXIS] == residual_shape[CHANNEL_AXIS]
 
     shortcut = input 
-    print("input shape", input_shape)
-    print("residual shape", residual_shape)
-    print("stride width {}, height {}, equal channels? {}".format(stride_width, stride_height, equal_channels))
     # 1x1 conv if the shape is different; otherwise just identity 
     if stride_width > 1 or stride_height > 1 or not equal_channels:
         shortcut = layers.Conv2D(filters=residual_shape[CHANNEL_AXIS],
@@ -50,7 +49,6 @@ def _connect(input, residual):
                           padding='valid',
                           kernel_initializer='he_normal',
                           kernel_regularizer=l2(0.0001))(input)
-        print("shortcut shape", K.int_shape(shortcut))
 
     return layers.merge.add([shortcut, residual])
 
@@ -79,8 +77,6 @@ def _dim_ordering():
         ROW_AXIS = 2 
         COL_AXIS = 3 
 
-    print("channels first?", K.image_data_format == "channels_first")
-    print("Row axis {}, column axis {}, channel axis {}".format(ROW_AXIS, COL_AXIS, CHANNEL_AXIS))
 
 
 def buildResNet(num_outputs, block_fn, repetitions, input_shape=(64, 64, 3)):
@@ -92,12 +88,12 @@ def buildResNet(num_outputs, block_fn, repetitions, input_shape=(64, 64, 3)):
     # x = layers.Conv2D(64, kernel_size=(7,7), strides=(2,2), padding='same')(input)
     x = _add_common_layer_conv(input, filters=64, kernel_size=(7,7), strides=(2,2))
     x = layers.MaxPool2D(pool_size=(3,3), strides=(2,2), padding='same')(x)
-    print("shape after pooling", K.int_shape(x))
 
     block = x 
     filters = 64 
     for i, r in enumerate(repetitions):
         block = _residual_block(block, block_fn, filters=filters, repetitions=r, is_first_layer=(i==0))
+        block = layers.Dropout(0.3)(block)
         filters = filters*2
 
     
@@ -167,23 +163,30 @@ def resnet_101(num_outputs):
 def resnet_152(num_outputs):
     return buildResNet(num_outputs, bottleneck_fn, [3, 8, 36, 3])
 
+
 def main(argv):
     if len(argv) < 2:
         print("require file path to training data")
         exit()
 
-    x_train, y_train, x_val, y_val, wnids, wnids_to_label, wnids_to_words = data.load_tiny_imagenet(argv[1])
+    model_func = [resnet_18, resnet_34, resnet_50, resnet_101]
+    model_names = ["resnet18_dropout", "resnet34_dropout", "resnet_50_dropout", "resnet_101_dropout"]
 
-    model = resnet_101(len(wnids))
-    model.compile(loss="sparse_categorical_crossentropy", 
-                  optimizer="sgd", 
-                  metrics=['accuracy'])
+    x_train, y_train, x_val, y_val, wnids, wnids_to_label, wnids_to_words = data.load_tiny_imagenet(argv[1], False)
 
-    model.fit(x_train, y_train, 
-              batch_size=128,
-              epochs=12,
-              verbose=1)
-              # validation_data=(x_val, y_val))
+    for i in range(len(model_func)):
+        model = model_func[i](len(wnids))
+        model.compile(loss="sparse_categorical_crossentropy", 
+                      optimizer=keras.optimizers.Adadelta(),
+                      metrics=['accuracy'])
+
+        model.fit(x_train, y_train, 
+                  batch_size=64,
+                  epochs=20,
+                  verbose=1,
+                  validation_data=(x_val, y_val))
+
+        model.save(model_names[i])
 
 
 if __name__ == "__main__":
